@@ -190,7 +190,7 @@
       },
 
       tagFile(index, row) {
-        console.log(index, row);
+        this.$router.push({path: '/home/work_table', query: {p_id: row['p_id'], name: row['name'], path: row['path'], total:row['total']}});
       },
 
       deleteProject(index, row) {

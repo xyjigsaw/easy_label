@@ -37,7 +37,7 @@
     margin-bottom: 40px;
   }
   .container {
-    height: 600px;
+    height: 800px;
   }
   .el-header {
     text-align: left;
