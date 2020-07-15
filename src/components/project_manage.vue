@@ -58,7 +58,7 @@
             placeholder="Search By Name"/>
         </template>
         <template slot-scope="scope">
-          <el-button size="mini" @click="tagFile(scope.$index, scope.row)">Tag</el-button>
+          <el-button size="mini" @click="tagFile(scope.$index, scope.row)">Mark</el-button>
           <el-button size="mini" type="warning" @click="editClass(scope.$index, scope.row)">Edit Class</el-button>
           <el-button size="mini" type="danger" @click="deleteProject(scope.$index, scope.row)">Delete</el-button>
         </template>

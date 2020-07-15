@@ -4,11 +4,19 @@
       <el-main style="padding: 0;">
 
         <el-row :gutter="12" type="flex" justify="center" style="padding: 10px;">
-          <el-col :span="6"><div class="grid-content bg-purple">
+          <el-col :span="4"><div class="grid-content bg-purple">
+            <el-button type="warning" icon="el-icon-back" circle @click="back2project"></el-button>
+            <p style="font-size: 8px; color: #ebb563; text-align: center">Exit</p>
+          </div></el-col>
+          <el-col :span="4"><div class="grid-content bg-purple">
             <el-button icon="el-icon-search" circle @click="see_all"></el-button>
             <p style="font-size: 8px; color: #606266; text-align: center">Preview</p>
           </div></el-col>
-          <el-col :span="6"><div class="grid-content bg-purple">
+          <el-col :span="4"><div class="grid-content bg-purple">
+            <el-button type="info" icon="el-icon-info" circle @click="logVis = true"></el-button>
+            <p style="font-size: 8px; color: #909399; text-align: center">Log</p>
+          </div></el-col>
+          <el-col :span="4" v-if="edit_fid"><div class="grid-content bg-purple">
             <el-button type="success" icon="el-icon-check" circle @click="save"></el-button>
             <p style="font-size: 8px; color: #67C23A; text-align: center">Save</p>
           </div></el-col>
@@ -20,7 +28,7 @@
 
 
         <div id="operation">
-          <div id="text_detail" @mouseup='selectText' @click='deleteEntity'></div>
+          <div id="text_detail" @mouseup="selectText" @click="deleteEntity"></div>
         </div>
       </el-main>
 
@@ -40,7 +48,7 @@
             label="Edit"
             width="50">
             <template slot-scope="scope">
-              <el-button @click="editFile(scope.row)" type="text" size="small">Tag</el-button>
+              <el-button @click="editFile(scope.$index, scope.row)" type="text" size="small">Mark</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -57,6 +65,21 @@
 
       </el-aside>
     </el-container>
+
+    <el-drawer
+      :with-header="false"
+      :visible.sync="logVis"
+      :direction="logDirection">
+      <div class="log-table" style="padding-left: 40px; padding-right: 40px; width: 60%; margin: auto">
+        <el-table :data="logTable" stripe style="width: 100%; text-align: center; font-size: 10px;"
+                  :row-style="{height:'10px'}" :cell-style="{padding:'5px 0'}">
+          <el-table-column prop="Event" label="Event" width="120"></el-table-column>
+          <el-table-column prop="entity_list_len" label="Number of Entity" width="150"></el-table-column>
+          <el-table-column prop="info" label="Info"></el-table-column>
+          <el-table-column prop="f_id" label="File ID" width="120"></el-table-column>
+        </el-table>
+      </div>
+    </el-drawer>
   </div>
 </template>
 
@@ -79,11 +102,17 @@
 
         labelIns: null,
         checkList: [],
-        check_max: 10,
+        check_max: 1,
 
-        edit_cid: null,
+        edit_fid: null,
         edit_text: '',
         edit_entity_list: [],
+        edit_table_pos: null,
+        raw_text: null,
+
+        logVis: false,
+        logDirection: 'btt',
+        logTable: [],
       };
     },
     methods: {
@@ -123,21 +152,18 @@
               });
             }
 
-
             this.classNameList = [];
             this.classColorList = [];
 
             let class_str = '';
-
             for(let i = 0; i < response.data['data'].length; i++){
               this.classNameList.push(response.data['data'][i]['label']);
               this.classColorList.push(response.data['data'][i]['color']);
               class_str = this.addClassLabelStr(class_str, response.data['data'][i]['label'], response.data['data'][i]['color']);
             }
-            this.checkList = this.classNameList;
-            this.check_max = this.classNameList.length;
+            this.checkList = [];
+            //this.check_max = this.classNameList.length;
             this.gen_labels(class_str, '#class_ls');
-
             this.lazy_fetch_file(0);
 
           }
@@ -187,35 +213,77 @@
 
       },
 
-      editFile(info){
-        console.log(info['f_id']);
-        //for content
-
-        this.edit_cid = info['f_id'];
+      editFile(index, info){
+        if(this.edit_fid){
+          this.change_status(this.edit_table_pos);
+          this.$notify({
+            title: 'Warning',
+            message: 'Please save the previous file before switching files. If it has been saved, please ignore.',
+            duration: 4000,
+            type: 'warning'
+          });
+        }
+        this.edit_fid = info['f_id'];
         this.edit_text = info['text'];
         this.edit_entity_list = eval(info['entity_list']);
-
+        this.raw_text = this.edit_entity_list.length === 0;
+        this.checkList = [];
+        this.labelIns.checkList = this.checkList;
+        for(let i = 0; i < this.tableData.length; i++){
+          if(this.tableData[i]['f_id'] === this.edit_fid){
+            this.edit_table_pos = i;
+          }
+        }
+        this.change_status(this.edit_table_pos);
         let decorated_text = this.genContent(this.edit_entity_list, this.edit_text);
+        this.display_content(decorated_text);
+
+        this.logTable.unshift({'Event': "Mark", 'f_id': this.edit_fid, 'info': 'Edit file to mark entity',
+          'entity_list_len': this.edit_entity_list.length});
+      },
+
+      display_content(decorated_text){
         document.getElementById("text_detail").innerHTML="<div style=\"box-shadow: 0 0 2px #b1b1b1; margin: 10px; padding:20px; border-radius: 5px; " +
           "line-height: 30px;\">" + decorated_text + "</div>";
+        this.click_check();
       },
 
       sort_entity(a, b){
         return a.start - b.start;
       },
 
+      click_check(){
+        for(let i=0; i < this.classNameList.length; i++){
+          let obj = document.getElementsByClassName(this.classNameList[i]);
+          if(this.checkList.indexOf(this.classNameList[i]) > -1){
+            for(let j=0; j<obj.length; j++){
+              obj.item(j).style.color=this.classColorList[i];
+              obj.item(j).style.fontWeight="bold";
+              obj.item(j).style.backgroundColor=this.classColorList[i];
+              obj.item(j).style.color="white";
+              obj.item(j).style.padding="2px 4px 2px 4px";
+              obj.item(j).style.borderRadius="4px";
+            }
+          }else{
+            for(let j=0; j<obj.length; j++){
+              obj.item(j).style.backgroundColor='transparent';
+              obj.item(j).style.color=this.classColorList[i];
+              obj.item(j).style.fontWeight="bold";
+              obj.item(j).style.padding="2px 4px 2px 4px";
+            }
+          }
+        }
+      },
+
       genContent(entity_str_ls, cur_content){
         entity_str_ls.sort(this.sort_entity);
         let split_ls = [];
-
         for(let j = 0; j < entity_str_ls.length; j++){
-          let split_json = entity_str_ls[j];
-          let start_str = split_json['start'];
-          let end_str = split_json['end'];
-          let type_str = split_json['type'];
+          let start_str = entity_str_ls[j]['start'];
+          let end_str = entity_str_ls[j]['end'];
+          let type_str = entity_str_ls[j]['type'];
           split_ls.push([type_str, parseInt(start_str), parseInt(end_str)]);
         }
-
         for(let j = split_ls.length - 1; j >= 0; j--){
           let [type, startNum, endNum] = split_ls[j];
           for(let k = 0; k < this.classNameList.length; k++){
@@ -226,7 +294,6 @@
             }
           }
         }
-
         return cur_content;
       },
 
@@ -236,75 +303,139 @@
         this.click_check();
         this.checkList = [];
         this.labelIns.checkList = this.checkList;
+        this.logTable.unshift({'Event': "Preview", 'f_id': this.edit_fid, 'info': 'Preview all entity',
+          'entity_list_len': this.edit_entity_list.length});
       },
 
       save(){
+        this.$confirm('Submit current changes?', 'Warning', {
+          confirmButtonText: 'Yes',
+          cancelButtonText: 'Cancel',
+          type: 'warning'
+        }).then(() => {
+          let url_data={
+            f_id: this.edit_fid,
+            entity_list: this.edit_entity_list,
+          };
+          this.$axios.post('/api/submit_entity_list', url_data).then(response => {
+            if (response.data['message'] === 'success') {
+              this.tableData[this.edit_table_pos]['version']++;
+              this.tableData[this.edit_table_pos]['entity_list'] = this.edit_entity_list;
+              this.$notify({
+                title: 'Success',
+                message: 'Entity submitted successfully',
+                type: 'success'
+              });
+              this.logTable.unshift({'Event': "Save", 'f_id': this.edit_fid, 'info': 'Save to database successfully',
+                'entity_list_len': this.edit_entity_list.length});
+            }else{
+              this.$notify.error({
+                title: 'Error',
+                message: 'Unknown Error'
+              });
+            }
+          }).catch(err => {
+            this.$notify.error({
+              title: 'Error',
+              message: err
+            });
+            this.logTable.unshift({'Event': "Save", 'f_id': this.edit_fid, 'info': 'Cannot Save to database',
+              'entity_list_len': this.edit_entity_list.length});
+          });
+        }).catch(() => {
+        });
+      },
 
+      back2project(){
+        this.$router.push("/home/project_manage");
       },
 
       selectText(){
         try{
           let selected=window.getSelection().toString();
           if(selected != null){
+            let range = window.getSelection().getRangeAt(0);
             let base = 0;
-            let raw_flag = false;
-            let container = window.getSelection().getRangeAt(0).startContainer;
-            while(container.previousSibling){
-              base += container.previousSibling.textContent.length;
-              container = container.previousSibling;
+            let preElement = range.endContainer;
+            while(preElement.previousSibling){
+              base += preElement.previousSibling.textContent.length;
+              preElement = preElement.previousSibling;
             }
-            if(!container.previousSibling){
-              raw_flag = true;
-            }
-            let anchorOffset = window.getSelection().anchorOffset;
-            let focusOffset = window.getSelection().focusOffset;
-            let start_num = Math.min(anchorOffset, focusOffset);
-            let end_num = Math.max(anchorOffset, focusOffset);
-            if(raw_flag || (base > 0 && start_num < end_num && end_num - start_num === selected.length && this.checkList.length === 1)){
-
-
-              console.log('Selected text: ' + selected);
-              console.log(start_num, end_num);
-
-
+            let start_num = Math.min(window.getSelection().anchorOffset, window.getSelection().focusOffset);
+            let end_num = Math.max(window.getSelection().anchorOffset, window.getSelection().focusOffset);
+            //console.log(base, this.raw_text, start_num, end_num, selected)
+            if((this.raw_text || base > 0 || (!this.raw_text && base === 0))
+              && start_num < end_num && end_num - start_num === selected.length && this.checkList.length === 1){
               this.edit_entity_list.push({'start': base + start_num,
                 'end': base + end_num, 'word': selected, 'type': this.checkList[0]});
-
-              console.log(this.edit_entity_list);
-
-
-              let decorated_text = this.genContent(this.edit_entity_list, this.text);
-
-              console.log(decorated_text);
-              document.getElementById("text_detail").innerHTML="<div style=\"box-shadow: 0 0 2px #b1b1b1; margin: 10px; padding:20px; border-radius: 5px; " +
-                "line-height: 30px;\">" + decorated_text + "</div>";
-
+              let decorated_text = this.genContent(this.edit_entity_list, this.edit_text);
+              this.display_content(decorated_text);
+              this.raw_text = false;
+              this.logTable.unshift({'Event': "Mark", 'f_id': this.edit_fid,
+                'info': 'Selected: ' + selected + ', Start: ' + start_num + ', End: ' + end_num,
+                'entity_list_len': this.edit_entity_list.length});
             }else if(base === 0 && this.checkList.length === 1){
-              return;
             }else{
-              return;
             }
           }else{
-            return;
           }
         }catch(err){
           this.$message.error(err);
         }
       },
-      deleteEntity(){
 
+      deleteEntity(){
+        let spanObj=document.elementFromPoint(event.clientX, event.clientY);
+        let spanClass = spanObj.getAttribute("class");
+        if(this.checkList.length === 1 && spanClass === this.checkList[0]) {
+          let startNum = parseInt(spanObj.getAttribute("data-startNum"));
+          let endNum = parseInt(spanObj.getAttribute("data-endNum"));
+          let cur_content = this.edit_text;
+          for(let i = this.edit_entity_list.length-1; i >= 0; i--){
+            if(this.edit_entity_list[i]['start'] === startNum && this.edit_entity_list[i]['end'] === endNum){
+              this.edit_entity_list.splice(i,1);
+            }
+          }
+          if(this.edit_entity_list.length === 0){this.raw_text = true;}
+          let decorated_text = this.genContent(this.edit_entity_list, cur_content);
+          this.display_content(decorated_text);
+          this.logTable.unshift({'Event': "Unmark", 'f_id': this.edit_fid,
+            'info': 'Class: ' + spanClass + ', Start: ' + startNum + ', End: ' + endNum,
+            'entity_list_len': this.edit_entity_list.length});
+        }
       },
 
-
+      change_status(pos){
+        if(this.edit_fid){
+          let url_data={
+            f_id: this.edit_fid,
+          };
+          this.$axios.post('/api/change_status', url_data).then(response => {
+            if (response.data['message'] === 'success') {
+              if(this.tableData[pos]['is_edit'] > 0){
+                this.tableData[pos]['is_edit'] = 0;
+              }else if(this.tableData[pos]['is_edit'] === 0){
+                this.tableData[pos]['is_edit'] = 1;
+              }
+            }
+          }).catch(err => {
+          });
+        }
+      },
 
     },
 
     created() {
       this.init_page();
+    },
+    destroyed() {
+      console.log('ds')
+      if(this.edit_fid){
+        this.change_status(this.edit_table_pos);
+      }
     }
   };
 </script>
 
 <style scoped>
-
 </style>
