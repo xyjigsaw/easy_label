@@ -88,6 +88,8 @@
   export default {
     data() {
       return {
+        ws: null,
+
         p_id: this.$route.query.p_id,
         name: this.$route.query.name,
         path: this.$route.query.path,
@@ -135,6 +137,8 @@
       },
 
       init_page() {
+        this.ws = new WebSocket(this.$route.meta.ws_port);
+        this.ws.onmessage = this.getMessage;
         let url_data={
           p_id: this.p_id,
         };
@@ -215,7 +219,7 @@
 
       editFile(index, info){
         if(this.edit_fid){
-          this.change_status(this.edit_table_pos);
+          this.change_status(this.edit_table_pos, 0, true);
           this.$notify({
             title: 'Warning',
             message: 'Please save the previous file before switching files. If it has been saved, please ignore.',
@@ -234,7 +238,7 @@
             this.edit_table_pos = i;
           }
         }
-        this.change_status(this.edit_table_pos);
+        this.change_status(this.edit_table_pos, 1, true);
         let decorated_text = this.genContent(this.edit_entity_list, this.edit_text);
         this.display_content(decorated_text);
 
@@ -405,17 +409,18 @@
         }
       },
 
-      change_status(pos){
+      change_status(pos, status, send_msg){
         if(this.edit_fid){
           let url_data={
             f_id: this.edit_fid,
+            status: status,
           };
           this.$axios.post('/api/change_status', url_data).then(response => {
             if (response.data['message'] === 'success') {
-              if(this.tableData[pos]['is_edit'] > 0){
-                this.tableData[pos]['is_edit'] = 0;
-              }else if(this.tableData[pos]['is_edit'] === 0){
-                this.tableData[pos]['is_edit'] = 1;
+              this.tableData[pos]['is_edit'] = status;
+              let wsInfo = {'message': {'p_id': this.p_id, 'f_id': this.edit_fid, 'status': status, 'pos': pos}, 'subject': 'lock'}
+              if(send_msg){
+                this.sendMessage(JSON.stringify(wsInfo));
               }
             }
           }).catch(err => {
@@ -423,16 +428,29 @@
         }
       },
 
+      getMessage(info) {
+        let info_data = JSON.parse(info.data);
+        let msg = info_data['message'];
+        console.log('WS MESSAGE: ', info_data);
+        if(info_data['subject'] === 'lock' && msg['p_id'] === this.p_id && msg['pos'] <= this.tableData.length){
+          this.tableData[msg['pos']]['is_edit'] = msg['status'];
+        }
+      },
+
+      sendMessage(info) {
+        this.ws.send(info);
+      }
+
     },
 
     created() {
       this.init_page();
     },
     destroyed() {
-      console.log('ds')
       if(this.edit_fid){
-        this.change_status(this.edit_table_pos);
+        this.change_status(this.edit_table_pos, 0, true);
       }
+      //this.ws.close();
     }
   };
 </script>

@@ -28,4 +28,5 @@ vue init <模板名称> <项目名称>
 
 npm install axios -S
 npm i element-ui -S
+npm install goeasy -S
 ```
