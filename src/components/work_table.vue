@@ -438,6 +438,7 @@
       },
 
       sendMessage(info) {
+        console.log('send info');
         this.ws.send(info);
       }
 
@@ -450,7 +451,7 @@
       if(this.edit_fid){
         this.change_status(this.edit_table_pos, 0, true);
       }
-      //this.ws.close();
+      this.ws.close();
     }
   };
 </script>
