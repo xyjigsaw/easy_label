@@ -139,6 +139,8 @@
       init_page() {
         this.ws = new WebSocket(this.$route.meta.ws_port);
         this.ws.onmessage = this.getMessage;
+        this.ws.onopen=this.openMessage;
+
         let url_data={
           p_id: this.p_id,
         };
@@ -332,6 +334,11 @@
               });
               this.logTable.unshift({'Event': "Save", 'f_id': this.edit_fid, 'info': 'Save to database successfully',
                 'entity_list_len': this.edit_entity_list.length});
+
+              let wsInfo = {'message': {'p_id': this.p_id, 'f_id': this.edit_fid, 'entity_list': this.edit_entity_list,
+                  'version': this.tableData[this.edit_table_pos]['version'], 'pos': this.edit_table_pos}, 'subject': 'save'}
+              this.sendMessage(JSON.stringify(wsInfo));
+
             }else{
               this.$notify.error({
                 title: 'Error',
@@ -435,25 +442,47 @@
         if(info_data['subject'] === 'lock' && msg['p_id'] === this.p_id && msg['pos'] <= this.tableData.length){
           this.tableData[msg['pos']]['is_edit'] = msg['status'];
         }
+
+        if(info_data['subject'] === 'save' && msg['p_id'] === this.p_id && msg['pos'] <= this.tableData.length){
+          this.tableData[msg['pos']]['entity_list'] = msg['entity_list'];
+          this.tableData[msg['pos']]['version'] = msg['version'];
+        }
       },
 
       sendMessage(info) {
-        console.log('send info');
         this.ws.send(info);
-      }
+      },
+
+      openMessage() {
+        let wsInfo = {'message': {'p_id': this.p_id}, 'subject': 'online'}
+        this.ws.send(JSON.stringify(wsInfo));
+      },
 
     },
 
     created() {
       this.init_page();
+      this.over = () => {
+        this.ws.close();
+      }
     },
-    destroyed() {
+
+    beforeDestroy() {
       if(this.edit_fid){
         this.change_status(this.edit_table_pos, 0, true);
       }
-      this.ws.close();
-    }
+    },
+
   };
+  function sleep(numberMillis) {
+    let now = new Date();
+    let exitTime = now.getTime() + numberMillis;
+    while (true) {
+      now = new Date();
+      if (now.getTime() > exitTime)
+        return;
+    }
+  }
 </script>
 
 <style scoped>

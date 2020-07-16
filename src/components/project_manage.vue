@@ -44,12 +44,13 @@
       element-loading-spinner="el-icon-loading"
       element-loading-background="rgba(0, 0, 0, 0.8)"
       style="width: 100%">
-      <el-table-column label="ID" prop="p_id"></el-table-column>
+      <el-table-column label="ID" prop="p_id" width="270"></el-table-column>
       <el-table-column label="Project Name" prop="name"></el-table-column>
       <el-table-column label="Project Path" prop="path"></el-table-column>
-      <el-table-column label="Total Files" prop="total" width="100"></el-table-column>
-      <el-table-column label="Created Time" prop="time" width="180"></el-table-column>
+      <el-table-column label="Total Files" prop="total" width="90"></el-table-column>
+      <el-table-column label="Created Time" prop="time"></el-table-column>
       <el-table-column
+        width="270"
         align="right">
         <template slot="header" slot-scope="scope">
           <el-input
