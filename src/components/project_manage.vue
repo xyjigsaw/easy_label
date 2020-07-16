@@ -50,7 +50,7 @@
       <el-table-column label="Total Files" prop="total" width="90"></el-table-column>
       <el-table-column label="Created Time" prop="time"></el-table-column>
       <el-table-column
-        width="270"
+        width="290"
         align="right">
         <template slot="header" slot-scope="scope">
           <el-input
@@ -59,9 +59,9 @@
             placeholder="Search By Name"/>
         </template>
         <template slot-scope="scope">
-          <el-button size="mini" @click="tagFile(scope.$index, scope.row)">Mark</el-button>
-          <el-button size="mini" type="warning" @click="editClass(scope.$index, scope.row)">Edit Class</el-button>
-          <el-button size="mini" type="danger" @click="deleteProject(scope.$index, scope.row)">Delete</el-button>
+          <el-button size="mini" type="success" icon="el-icon-edit-outline" @click="tagFile(scope.$index, scope.row)">Mark</el-button>
+          <el-button size="mini" type="warning" icon="el-icon-collection-tag" @click="editClass(scope.$index, scope.row)">Class</el-button>
+          <el-button size="mini" type="danger" icon="el-icon-delete" @click="deleteProject(scope.$index, scope.row)">Delete</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -187,7 +187,7 @@
       },
 
       editClass(index, row) {
-        this.$router.push({path: '/home/class_manage', query: {p_id: row['p_id'], name: row['name'], path: row['path']}});
+        this.$router.push({path: '/home/class_manage', query: {p_id: row['p_id'], name: row['name'], path: row['path'], total: row['total']}});
       },
 
       tagFile(index, row) {

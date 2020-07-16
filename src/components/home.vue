@@ -2,13 +2,22 @@
   <el-container class="container">
     <!-- 头部 -->
     <el-header>
-      <h1>Easy Label</h1>
+      <h1>Easy Mark</h1>
     </el-header>
     <el-container>
-      <!-- aside -->
-      <el-aside width="200px">
-        <left />
-      </el-aside>
+      <!-- aside menu-->
+      <el-menu class="el-menu-vertical-demo" @open="handleOpen" @close="handleClose" :collapse="isCollapse">
+        <el-menu-item index="1" @click="navProject">
+          <i class="el-icon-folder-opened"></i>
+          <span slot="title">Project</span>
+        </el-menu-item>
+        <el-menu-item index="2" @click="isCollapse = !isCollapse">
+          <i class="el-icon-caret-right" v-if="isCollapse"></i>
+          <span slot="title" v-if="isCollapse">Unfold</span>
+          <i class="el-icon-caret-left" v-if="!isCollapse"></i>
+          <span slot="title" v-if="!isCollapse">Hide</span>
+        </el-menu-item>
+      </el-menu>
       <!-- main -->
       <el-main>
         <router-view></router-view>
@@ -18,17 +27,23 @@
 </template>
 
 <script>
-  import left from "@/components/left.vue";
-
   export default {
     name: "home",
-    components: {
-      left
-    },
     data() {
       return {
-        fits: ["fill", "contain", "cover", "none", "scale-down"]
+        isCollapse: false
       };
+    },
+    methods: {
+      handleOpen(key, keyPath) {
+        //console.log(key, keyPath);
+      },
+      handleClose(key, keyPath) {
+        //console.log(key, keyPath);
+      },
+      navProject(){
+        this.$router.push("/home/project_manage");
+      }
     }
   };
 </script>
@@ -37,18 +52,25 @@
     margin-bottom: 40px;
   }
   .container {
-    height: 800px;
+    height: 1000px;
   }
   .el-header {
     text-align: left;
-    background-color: #e0e0e0;
+    background-color: #FFFFFF;
   }
   .el-main {
     background-color: #e9eef3;
     text-align: center;
     padding: 0;
   }
-  .el-aside{
-    background-color: #e0e0e0;
+  .el-menu-vertical-demo{
+    background-color: #FFFFFF;
+    font-size: large;
+    font-weight: bolder;
+  }
+
+  .el-menu-vertical-demo:not(.el-menu--collapse) {
+    width: 200px;
+    min-height: 400px;
   }
 </style>

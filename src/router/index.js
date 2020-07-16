@@ -2,7 +2,6 @@ import Vue from 'vue'
 import Router from 'vue-router'
 import HelloWorld from '@/components/HelloWorld'
 import home from "@/components/home";
-import left from "@/components/left";
 import class_manage from "@/components/class_manage";
 import project_manage from "@/components/project_manage";
 import work_table from "@/components/work_table";
@@ -26,11 +25,6 @@ export default new Router({
         {path: 'project_manage', name: 'project_manage', component: project_manage},
         {path: 'work_table', name: 'work_table', component: work_table, meta: {ws_port: 'ws://192.168.0.4:8000/ws'}},
       ]
-    },
-    {
-      path: '/left',
-      name: 'left',
-      component: left
     },
     {
       path: '/ws_service',

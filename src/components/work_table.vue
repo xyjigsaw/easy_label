@@ -70,14 +70,29 @@
       :with-header="false"
       :visible.sync="logVis"
       :direction="logDirection">
-      <div class="log-table" style="padding-left: 40px; padding-right: 40px; width: 60%; margin: auto">
-        <el-table :data="logTable" stripe style="width: 100%; text-align: center; font-size: 10px;"
-                  :row-style="{height:'10px'}" :cell-style="{padding:'5px 0'}">
-          <el-table-column prop="Event" label="Event" width="120"></el-table-column>
-          <el-table-column prop="entity_list_len" label="Number of Entity" width="150"></el-table-column>
-          <el-table-column prop="info" label="Info"></el-table-column>
-          <el-table-column prop="f_id" label="File ID" width="120"></el-table-column>
-        </el-table>
+      <div class="log_content">
+          <el-card class="box-card" style="margin: 10px; width:48%;box-shadow: 0 0 5px #dddddd; float: left;">
+            <div class="log-table" style="padding-left: 40px; padding-right: 40px; margin: auto">
+              <el-table :data="logTable" stripe style="width: 100%; text-align: center; font-size: 10px;"
+                        :row-style="{height:'10px'}" :cell-style="{padding:'5px 0'}">
+                <el-table-column prop="Event" label="Event" width="120"></el-table-column>
+                <el-table-column prop="entity_list_len" label="Number of Entity" width="150"></el-table-column>
+                <el-table-column prop="info" label="Info"></el-table-column>
+                <el-table-column prop="f_id" label="File ID" width="120"></el-table-column>
+              </el-table>
+            </div>
+          </el-card>
+
+          <el-card class="box-card" style="margin: 10px; width:48%;box-shadow: 0 0 5px #dddddd; float: left;">
+            <div class="log-table" style="padding-left: 40px; padding-right: 40px; margin: auto">
+              <el-table :data="wsTable" stripe style="width: 100%; text-align: center; font-size: 8px;"
+                        :row-style="{height:'10px'}" :cell-style="{padding:'5px 0'}">
+                <el-table-column prop="subject" label="Subject" width="65"></el-table-column>
+                <el-table-column prop="info" label="Info"></el-table-column>
+              </el-table>
+            </div>
+          </el-card>
+
       </div>
     </el-drawer>
   </div>
@@ -89,6 +104,7 @@
     data() {
       return {
         ws: null,
+        wsTable: [],
 
         p_id: this.$route.query.p_id,
         name: this.$route.query.name,
@@ -129,10 +145,7 @@
             this.tableData = this.tableData.concat(response.data['data']);
           }
         }).catch(err => {
-          this.$notify.error({
-            title: 'Error',
-            message: err
-          });
+          this.$notify.error({title: 'Error', message: err});
         });
       },
 
@@ -168,16 +181,12 @@
               class_str = this.addClassLabelStr(class_str, response.data['data'][i]['label'], response.data['data'][i]['color']);
             }
             this.checkList = [];
-            //this.check_max = this.classNameList.length;
             this.gen_labels(class_str, '#class_ls');
             this.lazy_fetch_file(0);
 
           }
         }).catch(err => {
-          this.$notify.error({
-            title: 'Error',
-            message: err
-          });
+          this.$notify.error({title: 'Error', message: err});
         });
       },
 
@@ -438,7 +447,8 @@
       getMessage(info) {
         let info_data = JSON.parse(info.data);
         let msg = info_data['message'];
-        console.log('WS MESSAGE: ', info_data);
+        console.log(info);
+        this.wsTable.unshift({'subject': info_data['subject'], 'info': JSON.stringify(msg)});
         if(info_data['subject'] === 'lock' && msg['p_id'] === this.p_id && msg['pos'] <= this.tableData.length){
           this.tableData[msg['pos']]['is_edit'] = msg['status'];
         }
@@ -462,27 +472,18 @@
 
     created() {
       this.init_page();
-      this.over = () => {
-        this.ws.close();
-      }
     },
 
     beforeDestroy() {
       if(this.edit_fid){
         this.change_status(this.edit_table_pos, 0, true);
       }
+      let wsInfo = {'message': {'p_id': this.p_id}, 'subject': 'offline'}
+      this.sendMessage(JSON.stringify(wsInfo));
     },
 
   };
-  function sleep(numberMillis) {
-    let now = new Date();
-    let exitTime = now.getTime() + numberMillis;
-    while (true) {
-      now = new Date();
-      if (now.getTime() > exitTime)
-        return;
-    }
-  }
+
 </script>
 
 <style scoped>

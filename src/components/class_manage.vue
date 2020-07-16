@@ -1,16 +1,27 @@
 <template>
   <div>
     <el-row>
-      <el-col :span="12">
-        <div class="grid-content bg-purple">
-          <el-button type="primary" icon="el-icon-plus" @click="addLabelVisible = true">Add Class</el-button>
+      <el-col :span="6">
+        <div class="grid-content bg-purple-light">
+          <el-button type="info" plain icon="el-icon-back" @click="back2project">Exit</el-button>
         </div>
       </el-col>
-      <el-col :span="12"><div class="grid-content bg-purple-light"></div></el-col>
+
+      <el-col :span="6">
+        <div class="grid-content bg-purple">
+          <el-button type="success" plain icon="el-icon-edit-outline" @click="tagFile">Mark</el-button>
+        </div>
+      </el-col>
+
+      <el-col :span="6">
+        <div class="grid-content bg-purple">
+          <el-button type="primary" plain icon="el-icon-plus" @click="addLabelVisible = true">Add Class</el-button>
+        </div>
+      </el-col>
+
     </el-row>
 
     <el-dialog title="Add Class Label" :visible.sync="addLabelVisible" width="30%">
-
       <el-form>
         <el-form-item label="Input Class Name">
           <el-input v-model="addLabelName" autocomplete="off"></el-input>
@@ -22,12 +33,29 @@
           <el-color-picker v-model="addLabelColor"></el-color-picker>
         </el-form-item>
       </el-form>
-
       <div slot="footer" class="dialog-footer">
         <el-button @click="addLabelVisible = false">Cancel</el-button>
         <el-button type="primary" @click="addClassLabel">Submit</el-button>
       </div>
+    </el-dialog>
 
+    <el-dialog title="Update Class Label" :visible.sync="rLabelVisible" width="30%">
+      <el-form>
+        <el-form-item label="New Class Name (Not recommended to modify)">
+          <el-input v-model="rLabelName" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="Description">
+          <el-input v-model="rLabelDes" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="Choose Color">
+          <el-color-picker v-model="rLabelColor"></el-color-picker>
+        </el-form-item>
+      </el-form>
+
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="rLabelVisible = false">Cancel</el-button>
+        <el-button type="primary" @click="updateClassLabel">Submit</el-button>
+      </div>
     </el-dialog>
 
     <el-table :data="tableData" style="width: 100%">
@@ -58,7 +86,8 @@
 
       <el-table-column label="Operation">
         <template slot-scope="scope">
-          <el-button size="mini" type="danger" @click="deleteClass(scope.$index, scope.row)">Delete</el-button>
+          <el-button size="mini" icon="el-icon-edit" @click="clickUpdateClass(scope.$index, scope.row)">Edit</el-button>
+          <el-button size="mini" type="danger" icon="el-icon-delete" @click="deleteClass(scope.$index, scope.row)">Delete</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -71,6 +100,8 @@
       return {
         p_id: this.$route.query.p_id,
         name: this.$route.query.name,
+        path: this.$route.query.path,
+        total: this.$route.query.total,
 
         tableData: [],
         classNameList: [],
@@ -80,6 +111,12 @@
         addLabelName: '',
         addLabelColor: '',
         addLabelDes: '',
+
+        rLabelVisible: false,
+        rLabelName: '',
+        rLabelColor: '',
+        rLabelDes: '',
+        rRow: null,
 
       };
     },
@@ -166,31 +203,101 @@
       },
 
       deleteClass(index, row){
-        let url_data={
-          c_id: row['c_id'],
-        };
-        this.$axios.post('/api/delete_class', url_data).then(response => {
-          if (response.data['message'] === 'success') {
-            this.$notify({
-              title: 'Success',
-              message: 'Deleted successfully',
-              type: 'success'
-            });
-            this.fetch_class();
-          }
-        }).catch(err => {
-          this.$notify.error({
-            title: 'Error',
-            message: err
+        this.$confirm('Delete this class, continue?', 'Warning', {
+          confirmButtonText: 'Yes',
+          cancelButtonText: 'Cancel',
+          type: 'warning'
+        }).then(() => {
+          let url_data={
+            c_id: row['c_id'],
+          };
+          this.$axios.post('/api/delete_class', url_data).then(response => {
+            if (response.data['message'] === 'success') {
+              this.$notify({
+                title: 'Success',
+                message: 'Deleted successfully',
+                type: 'success'
+              });
+              this.fetch_class();
+            }
+          }).catch(err => {
+            this.$notify.error({title: 'Error', message: err});
           });
-        });
-      }
+        }).catch(() => {});
+      },
+
+      clickUpdateClass(index, row){
+        this.rLabelName = row['label'];
+        this.rLabelColor = row['color'];
+        this.rLabelDes = row['description'];
+        this.rRow = row;
+        this.rLabelVisible = true;
+      },
+
+      updateClassLabel() {
+        let tmpNameList = [].concat(this.classNameList);
+        let tmpColorList = [].concat(this.classColorList);
+        tmpNameList.remove(this.rRow['label']);
+        tmpColorList.remove(this.rRow['color']);
+
+        this.rLabelName = this.rLabelName.trim();
+        this.rLabelName = this.rLabelName.toLowerCase();
+        this.rLabelName = this.rLabelName.charAt(0).toUpperCase() + this.rLabelName.slice(1);
+        this.rLabelColor = this.rLabelColor.toUpperCase();
+        this.rLabelDes = this.rLabelDes.trim();
+        if(this.rLabelName === '' || this.rLabelColor === null || this.rLabelColor === ''){
+          this.$notify({title: 'Warning', message: 'Input is empty.', type: 'warning'});
+        }else if(this.addLabelName.length > 10) {
+          this.$notify({title: 'Warning', message: 'Too Long', type: 'warning'});
+        }else if(tmpNameList.indexOf(this.rLabelName) > -1 || tmpColorList.indexOf(this.rLabelColor) > -1){
+          this.$notify({title: 'Warning', message: 'Class or color has existed!', type: 'warning'});
+        }else{
+          let url_data={
+            rLabelName: this.rLabelName,
+            rLabelColor: this.rLabelColor,
+            rLabelDes: this.rLabelDes,
+            c_id: this.rRow['c_id'],
+          };
+          this.$axios.post('/api/update_class', url_data).then(response => {
+            if (response.data['message'] === 'success') {
+              this.$notify({title: 'Success', message: 'Class updated successfully', type: 'success'});
+              this.fetch_class();
+            }else{
+              this.$notify.error({title: 'Error', message: 'Unknown error'});
+            }
+          }).catch(err => {
+            this.$notify.error({title: 'Error', message: err});
+          });
+          this.rLabelVisible = false;
+          this.rLabelName = '';
+          this.rLabelColor = '';
+          this.rLabelDes = '';
+        }
+      },
+
+      back2project(){
+        this.$router.push("/home/project_manage");
+      },
+
+      tagFile() {
+        this.$router.push({path: '/home/work_table',
+          query: {p_id: this.$route.query.p_id, name: this.$route.query.name, path: this.$route.query.path, total: this.$route.query.total}});
+      },
+
     },
 
     created() {
       this.fetch_class();
     },
   };
+
+  Array.prototype.remove = function(val) {
+    let index = this.indexOf(val);
+    if (index > -1) {
+      this.splice(index, 1);
+    }
+  };
+
 </script>
 
 <style scoped>
