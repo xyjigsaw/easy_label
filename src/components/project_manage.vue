@@ -43,10 +43,10 @@
         element-loading-text="Analyzing..."
         element-loading-spinner="el-icon-loading"
         element-loading-background="rgba(0, 0, 0, 0.8)">
-        <el-table-column label="ID" prop="p_id" width="270"></el-table-column>
-        <el-table-column label="Project Name" prop="name"></el-table-column>
+        <el-table-column label="ID" prop="p_id" width="280"></el-table-column>
+        <el-table-column label="Project Name" sortable prop="name"></el-table-column>
         <el-table-column label="Project Path" prop="path"></el-table-column>
-        <el-table-column label="Total Files" prop="total" width="90"></el-table-column>
+        <el-table-column label="Files" sortable prop="total" width="90"></el-table-column>
         <el-table-column label="Created Time" prop="time"></el-table-column>
         <el-table-column
           width="290"

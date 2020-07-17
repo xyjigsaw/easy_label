@@ -30,7 +30,9 @@
         </div>
 
         <div id="operation" style="background-color: #FFFFFF; box-shadow: 0 0 5px #dddddd; padding:5px; margin: 5px; font-size: 15px;">
-          <p v-show="!edit_fid">Click <i class="el-icon-edit"></i> To Start</p>
+          <p v-show="!edit_fid">Click <i class="el-icon-edit"></i> In The Table On The Right To Start</p>
+          <el-button v-if="edit_fid" type="text">Version: {{ tableData[edit_table_pos]['version'] }} </el-button>
+          <el-button v-if="edit_fid" type="text">{{ tableData[edit_table_pos]['file_name'] }}</el-button>
           <div id="text_detail" @mouseup="selectText" @click="deleteEntity"></div>
         </div>
       </el-main>
@@ -345,8 +347,16 @@
       },
 
       editClass() {
-        this.$router.push({path: '/home/class_manage',
-          query: {p_id: this.$route.query.p_id, name: this.$route.query.name, path: this.$route.query.path, total: this.$route.query.total}});
+        if(this.onlineUsers > 1){
+          this.$notify({
+            title: 'Warning',
+            message: 'There are other users editing.',
+            type: 'warning'
+          });
+        }else{
+          this.$router.push({path: '/home/class_manage',
+            query: {p_id: this.$route.query.p_id, name: this.$route.query.name, path: this.$route.query.path, total: this.$route.query.total}});
+        }
       },
 
       save(){
@@ -476,7 +486,7 @@
       getMessage(info) {
         let info_data = JSON.parse(info.data);
         let msg = info_data['message'];
-        console.log(info);
+        console.log(info_data);
 
         if(info_data['subject'] === 'lock' && msg['p_id'] === this.p_id && msg['pos'] <= this.tableData.length){
           this.tableData[msg['pos']]['is_edit'] = msg['status'];
@@ -494,7 +504,7 @@
         }
 
         if(info_data['subject'] === 'total' && msg['p_id'] === this.p_id){
-          this.onlineUsers = msg['num'];
+          this.onlineUsers=msg['num'];
           this.wsTable.unshift({'subject': 'Login', 'info': 'User ' + msg['socket_ID'] + ' login, Total: ' + msg['num']});
         }
       },
