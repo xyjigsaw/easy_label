@@ -2,7 +2,7 @@
   <el-container class="container">
     <!-- 头部 -->
     <el-header>
-      <h1>Easy Mark</h1>
+      <h1 style="color: #409EFF">Easy Mark</h1>
     </el-header>
     <el-container>
       <!-- aside menu-->
@@ -72,5 +72,9 @@
   .el-menu-vertical-demo:not(.el-menu--collapse) {
     width: 200px;
     min-height: 400px;
+    min-width: 200px;
+  }
+  .el-menu--collapse {
+    min-width: 64px;
   }
 </style>

@@ -1,19 +1,35 @@
 <template>
   <div>
-    <el-row>
-      <el-col :span="6">
+    <el-row justify="space-around" style="background-color: #FFFFFF; box-shadow: 0 0 5px #dddddd; padding: 10px;margin: 5px;">
+      <el-col :span="3">
+        <el-button type="text">Project Name: {{ name }}</el-button>
+      </el-col>
+
+      <el-col :span="3">
+        <el-button type="text">Path: {{ path }}</el-button>
+      </el-col>
+
+      <el-col :span="2">
+        <el-button type="text">Files: {{ total }}</el-button>
+      </el-col>
+
+      <el-col :span="2">
+        <el-button type="text">Classes: {{ tableData.length }}</el-button>
+      </el-col>
+
+      <el-col :span="2" :offset="2">
         <div class="grid-content bg-purple-light">
-          <el-button type="info" plain icon="el-icon-back" @click="back2project">Exit</el-button>
+          <el-button type="danger" plain icon="el-icon-back" @click="back2project">Exit</el-button>
         </div>
       </el-col>
 
-      <el-col :span="6">
+      <el-col :span="2">
         <div class="grid-content bg-purple">
           <el-button type="success" plain icon="el-icon-edit-outline" @click="tagFile">Mark</el-button>
         </div>
       </el-col>
 
-      <el-col :span="6">
+      <el-col :span="2">
         <div class="grid-content bg-purple">
           <el-button type="primary" plain icon="el-icon-plus" @click="addLabelVisible = true">Add Class</el-button>
         </div>
@@ -58,7 +74,7 @@
       </div>
     </el-dialog>
 
-    <el-table :data="tableData" style="width: 100%">
+    <el-table :data="tableData" style="box-shadow: 0 0 5px #dddddd; padding: 10px;margin: 5px; width: auto;">
       <el-table-column label="Class Label">
         <template slot-scope="scope">
           <i class="el-icon-collection-tag"></i>

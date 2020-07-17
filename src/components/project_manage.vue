@@ -1,6 +1,6 @@
 <template>
   <div>
-    <el-row>
+    <el-row justify="space-around" style="background-color: #FFFFFF; box-shadow: 0 0 5px #dddddd; padding: 10px;margin: 5px;">
       <el-button type="primary" icon="el-icon-plus" @click="addProjectVisible = true">Add Project</el-button>
     </el-row>
 
@@ -33,38 +33,38 @@
       </div>
     </el-dialog>
 
-
-    <el-table
-      :data="tableData.filter(data => !tableSearch || data.name.toLowerCase().includes(tableSearch.toLowerCase()))"
-      stripe
-      border
-      highlight-current-row
-      v-loading="loading"
-      element-loading-text="Analyzing..."
-      element-loading-spinner="el-icon-loading"
-      element-loading-background="rgba(0, 0, 0, 0.8)"
-      style="width: 100%">
-      <el-table-column label="ID" prop="p_id" width="270"></el-table-column>
-      <el-table-column label="Project Name" prop="name"></el-table-column>
-      <el-table-column label="Project Path" prop="path"></el-table-column>
-      <el-table-column label="Total Files" prop="total" width="90"></el-table-column>
-      <el-table-column label="Created Time" prop="time"></el-table-column>
-      <el-table-column
-        width="290"
-        align="right">
-        <template slot="header" slot-scope="scope">
-          <el-input
-            v-model="tableSearch"
-            size="mini"
-            placeholder="Search By Name"/>
-        </template>
-        <template slot-scope="scope">
-          <el-button size="mini" type="success" icon="el-icon-edit-outline" @click="tagFile(scope.$index, scope.row)">Mark</el-button>
-          <el-button size="mini" type="warning" icon="el-icon-collection-tag" @click="editClass(scope.$index, scope.row)">Class</el-button>
-          <el-button size="mini" type="danger" icon="el-icon-delete" @click="deleteProject(scope.$index, scope.row)">Delete</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <div class="table-div" style="box-shadow: 0 0 5px #dddddd;margin: 5px;">
+      <el-table
+        :data="tableData.filter(data => !tableSearch || data.name.toLowerCase().includes(tableSearch.toLowerCase()))"
+        stripe
+        border
+        highlight-current-row
+        v-loading="loading"
+        element-loading-text="Analyzing..."
+        element-loading-spinner="el-icon-loading"
+        element-loading-background="rgba(0, 0, 0, 0.8)">
+        <el-table-column label="ID" prop="p_id" width="270"></el-table-column>
+        <el-table-column label="Project Name" prop="name"></el-table-column>
+        <el-table-column label="Project Path" prop="path"></el-table-column>
+        <el-table-column label="Total Files" prop="total" width="90"></el-table-column>
+        <el-table-column label="Created Time" prop="time"></el-table-column>
+        <el-table-column
+          width="290"
+          align="right">
+          <template slot="header" slot-scope="scope">
+            <el-input
+              v-model="tableSearch"
+              size="mini"
+              placeholder="Search By Name"/>
+          </template>
+          <template slot-scope="scope">
+            <el-button size="mini" type="success" icon="el-icon-edit-outline" @click="tagFile(scope.$index, scope.row)">Mark</el-button>
+            <el-button size="mini" type="warning" icon="el-icon-collection-tag" @click="editClass(scope.$index, scope.row)">Class</el-button>
+            <el-button size="mini" type="danger" icon="el-icon-delete" @click="deleteProject(scope.$index, scope.row)">Delete</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
   </div>
 </template>
 

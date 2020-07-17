@@ -3,41 +3,47 @@
     <el-container>
       <el-main style="padding: 0;">
 
-        <el-row :gutter="12" type="flex" justify="center" style="padding: 10px;">
-          <el-col :span="4"><div class="grid-content bg-purple">
-            <el-button type="warning" icon="el-icon-back" circle @click="back2project"></el-button>
-            <p style="font-size: 8px; color: #ebb563; text-align: center">Exit</p>
+        <el-row :gutter="12" type="flex" justify="center" style="background-color: #FFFFFF; padding: 10px;margin: 5px 5px 0 5px;">
+          <el-col :span="3"><div class="grid-content bg-purple">
+            <el-button type="danger" icon="el-icon-back" circle @click="back2project"></el-button>
+            <p style="font-size: 8px; color: #F56C6C; text-align: center; margin: 0;">Exit</p>
           </div></el-col>
-          <el-col :span="4"><div class="grid-content bg-purple">
+          <el-col :span="3"><div class="grid-content bg-purple">
+            <el-button type="warning" icon="el-icon-collection-tag" circle @click="editClass"></el-button>
+            <p style="font-size: 8px; color: #ebb563; text-align: center; margin: 0;">Class</p>
+          </div></el-col>
+          <el-col :span="3"><div class="grid-content bg-purple">
             <el-button icon="el-icon-search" circle @click="see_all"></el-button>
-            <p style="font-size: 8px; color: #606266; text-align: center">Preview</p>
+            <p style="font-size: 8px; color: #606266; text-align: center; margin: 0;">Preview</p>
           </div></el-col>
-          <el-col :span="4"><div class="grid-content bg-purple">
-            <el-button type="info" icon="el-icon-info" circle @click="logVis = true"></el-button>
-            <p style="font-size: 8px; color: #909399; text-align: center">Log</p>
+          <el-col :span="3"><div class="grid-content bg-purple">
+            <el-button type="info" icon="el-icon-message" circle @click="logVis = true"></el-button>
+            <p style="font-size: 8px; color: #909399; text-align: center; margin: 0;">Log</p>
           </div></el-col>
-          <el-col :span="4" v-if="edit_fid"><div class="grid-content bg-purple">
+          <el-col :span="3"><div class="grid-content bg-purple">
             <el-button type="success" icon="el-icon-check" circle @click="save"></el-button>
-            <p style="font-size: 8px; color: #67C23A; text-align: center">Save</p>
+            <p style="font-size: 8px; color: #67C23A; text-align: center; margin: 0;">Save</p>
           </div></el-col>
         </el-row>
 
         <div id="class_ls">
         </div>
 
-
-
-        <div id="operation">
+        <div id="operation" style="background-color: #FFFFFF; box-shadow: 0 0 5px #dddddd; padding:5px; margin: 5px; font-size: 15px;">
+          <p v-show="!edit_fid">Click <i class="el-icon-edit"></i> To Start</p>
           <div id="text_detail" @mouseup="selectText" @click="deleteEntity"></div>
         </div>
       </el-main>
 
-      <el-aside width="320px" style="background-color: #42b983">
+      <el-aside width="330px" style="height: 1000px;background-color: #FFFFFF; box-shadow: 0 0 5px #dddddd; padding:5px; margin: 5px 5px 5px 0;">
+        <el-row>
+          <el-button type="text">{{ name }}</el-button>
+          <el-button type="text">Users: {{ onlineUsers }}</el-button>
+        </el-row>
         <el-table
           :data="tableData.slice((currentPage - 1) * pageSize, currentPage*pageSize)"
           border
-          small
-          max-height="600"
+          :highlight-current-row="true"
           style="width: 100%; font-size: 10px">
           <el-table-column fixed prop="file_name" label="Name"></el-table-column>
           <el-table-column fixed prop="version" label="Ver." width="48"></el-table-column>
@@ -46,21 +52,24 @@
           <el-table-column
             fixed="right"
             label="Edit"
-            width="50">
+            width="60">
             <template slot-scope="scope">
-              <el-button @click="editFile(scope.$index, scope.row)" type="text" size="small">Mark</el-button>
+              <el-button icon="el-icon-edit" type="primary" @click="editFile(scope.$index, scope.row)" size="mini"></el-button>
             </template>
           </el-table-column>
         </el-table>
 
         <div class="partition" style="margin-top:15px;">
-          <el-pagination align='center'
-                         @next-click="handleNextClick"
-                         :current-page.sync="currentPage"
-                         :page-size="pageSize"
-                         layout="total, prev, next"
-                         :total="parseInt(total)">
-          </el-pagination>
+          <el-row>
+            <el-pagination background
+                           hide-on-single-page
+                           @next-click="handleNextClick"
+                           :current-page.sync="currentPage"
+                           :page-size="pageSize"
+                           layout="total, prev, next"
+                           :total="parseInt(total)">
+            </el-pagination>
+          </el-row>
         </div>
 
       </el-aside>
@@ -73,9 +82,9 @@
       <div class="log_content">
           <el-card class="box-card" style="margin: 10px; width:48%;box-shadow: 0 0 5px #dddddd; float: left;">
             <div class="log-table" style="padding-left: 40px; padding-right: 40px; margin: auto">
-              <el-table :data="logTable" stripe style="width: 100%; text-align: center; font-size: 10px;"
-                        :row-style="{height:'10px'}" :cell-style="{padding:'5px 0'}">
-                <el-table-column prop="Event" label="Event" width="120"></el-table-column>
+              <el-table :data="logTable" height="160" stripe style="width: 100%; text-align: center; font-size: 5px;"
+                        :row-style="{height:'8px'}" :cell-style="{padding:'5px 0'}">
+                <el-table-column prop="Event" label="Local Event" width="110"></el-table-column>
                 <el-table-column prop="entity_list_len" label="Number of Entity" width="150"></el-table-column>
                 <el-table-column prop="info" label="Info"></el-table-column>
                 <el-table-column prop="f_id" label="File ID" width="120"></el-table-column>
@@ -85,10 +94,10 @@
 
           <el-card class="box-card" style="margin: 10px; width:48%;box-shadow: 0 0 5px #dddddd; float: left;">
             <div class="log-table" style="padding-left: 40px; padding-right: 40px; margin: auto">
-              <el-table :data="wsTable" stripe style="width: 100%; text-align: center; font-size: 8px;"
-                        :row-style="{height:'10px'}" :cell-style="{padding:'5px 0'}">
-                <el-table-column prop="subject" label="Subject" width="65"></el-table-column>
-                <el-table-column prop="info" label="Info"></el-table-column>
+              <el-table :data="wsTable" height="160" stripe style="width: 100%; text-align: center; font-size: 5px;"
+                        :row-style="{height:'8px'}" :cell-style="{padding:'5px 0'}">
+                <el-table-column prop="subject" label="Remote Event" width="120"></el-table-column>
+                <el-table-column prop="info" label="Info from other users"></el-table-column>
               </el-table>
             </div>
           </el-card>
@@ -131,6 +140,8 @@
         logVis: false,
         logDirection: 'btt',
         logTable: [],
+
+        onlineUsers: null,
       };
     },
     methods: {
@@ -206,7 +217,8 @@
       gen_labels(template_str, elementID){
         let that = this;
         let classLabel = Vue.extend({
-          template: '<el-checkbox-group v-model="checkList" @change="click_check" :max="check_max">' + template_str +
+          template: '<el-checkbox-group v-model="checkList" @change="click_check" :max="check_max" ' +
+            'style="background-color: #FFFFFF; box-shadow: 0 0 5px #dddddd; padding: 8px;margin: 0 5px;">' + template_str +
             '</el-checkbox-group>',
           data: function () {
             return {
@@ -229,13 +241,23 @@
       },
 
       editFile(index, info){
+        if(info['is_edit'] === 1){
+          this.$notify({
+            title: 'Warning',
+            message: 'This file is being edited.',
+            duration: 4000,
+            type: 'warning'
+          });
+          return;
+        }
+
         if(this.edit_fid){
           this.change_status(this.edit_table_pos, 0, true);
           this.$notify({
             title: 'Warning',
             message: 'Please save the previous file before switching files. If it has been saved, please ignore.',
-            duration: 4000,
-            type: 'warning'
+            duration: 5000,
+            type: 'info'
           });
         }
         this.edit_fid = info['f_id'];
@@ -258,8 +280,8 @@
       },
 
       display_content(decorated_text){
-        document.getElementById("text_detail").innerHTML="<div style=\"box-shadow: 0 0 2px #b1b1b1; margin: 10px; padding:20px; border-radius: 5px; " +
-          "line-height: 30px;\">" + decorated_text + "</div>";
+        document.getElementById("text_detail").innerHTML="<div style=\"box-shadow: 0 0 2px #dddddd; margin: 10px; padding:20px; border-radius: 5px; " +
+          "line-height: 26px;\">" + decorated_text + "</div>";
         this.click_check();
       },
 
@@ -276,15 +298,15 @@
               obj.item(j).style.fontWeight="bold";
               obj.item(j).style.backgroundColor=this.classColorList[i];
               obj.item(j).style.color="white";
-              obj.item(j).style.padding="2px 4px 2px 4px";
-              obj.item(j).style.borderRadius="4px";
+              obj.item(j).style.padding="1px 3px";
+              obj.item(j).style.borderRadius="3px";
             }
           }else{
             for(let j=0; j<obj.length; j++){
               obj.item(j).style.backgroundColor='transparent';
               obj.item(j).style.color=this.classColorList[i];
               obj.item(j).style.fontWeight="bold";
-              obj.item(j).style.padding="2px 4px 2px 4px";
+              obj.item(j).style.padding="1px 3px";
             }
           }
         }
@@ -322,7 +344,20 @@
           'entity_list_len': this.edit_entity_list.length});
       },
 
+      editClass() {
+        this.$router.push({path: '/home/class_manage',
+          query: {p_id: this.$route.query.p_id, name: this.$route.query.name, path: this.$route.query.path, total: this.$route.query.total}});
+      },
+
       save(){
+        if(this.edit_fid === null){
+          this.$notify({
+            title: 'Info',
+            message: 'Nothing to Save',
+            type: 'info'
+          });
+          return;
+        }
         this.$confirm('Submit current changes?', 'Warning', {
           confirmButtonText: 'Yes',
           cancelButtonText: 'Cancel',
@@ -349,16 +384,10 @@
               this.sendMessage(JSON.stringify(wsInfo));
 
             }else{
-              this.$notify.error({
-                title: 'Error',
-                message: 'Unknown Error'
-              });
+              this.$notify.error({title: 'Error', message: 'Unknown Error'});
             }
           }).catch(err => {
-            this.$notify.error({
-              title: 'Error',
-              message: err
-            });
+            this.$notify.error({title: 'Error', message: err});
             this.logTable.unshift({'Event': "Save", 'f_id': this.edit_fid, 'info': 'Cannot Save to database',
               'entity_list_len': this.edit_entity_list.length});
           });
@@ -448,14 +477,25 @@
         let info_data = JSON.parse(info.data);
         let msg = info_data['message'];
         console.log(info);
-        this.wsTable.unshift({'subject': info_data['subject'], 'info': JSON.stringify(msg)});
+
         if(info_data['subject'] === 'lock' && msg['p_id'] === this.p_id && msg['pos'] <= this.tableData.length){
           this.tableData[msg['pos']]['is_edit'] = msg['status'];
+          if(msg['status'] === 1){
+            this.wsTable.unshift({'subject': 'File Lock', 'info': this.tableData[msg['pos']]['file_name'] + ' is locked.'});
+          }else{
+            this.wsTable.unshift({'subject': 'File Unlock', 'info': this.tableData[msg['pos']]['file_name'] + ' is unlocked.'});
+          }
         }
 
         if(info_data['subject'] === 'save' && msg['p_id'] === this.p_id && msg['pos'] <= this.tableData.length){
           this.tableData[msg['pos']]['entity_list'] = msg['entity_list'];
           this.tableData[msg['pos']]['version'] = msg['version'];
+          this.wsTable.unshift({'subject': 'Remote Info Sync', 'info': this.tableData[msg['pos']]['file_name'] + 'Updated, Version: '+ msg['version']});
+        }
+
+        if(info_data['subject'] === 'total' && msg['p_id'] === this.p_id){
+          this.onlineUsers = msg['num'];
+          this.wsTable.unshift({'subject': 'Login', 'info': 'User ' + msg['socket_ID'] + ' login, Total: ' + msg['num']});
         }
       },
 
@@ -486,5 +526,3 @@
 
 </script>
 
-<style scoped>
-</style>
