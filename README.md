@@ -4,7 +4,7 @@
 
 > A Vue.js project (front-end interface) for marking entities in texts(especially pdf paper).
 
-> **Back-end** and database structure will be shared **soon**.
+> **Database** structure will be shared **soon**.
 
 ## Functions or Features
 - Parse PDF paper into texts
@@ -23,7 +23,7 @@
 ![](easy_mark3.png)
 
 
-## Build Setup
+## Build Setup For Front-end
 
 ``` bash
 # install dependencies
@@ -40,6 +40,17 @@ npm run build --report
 ```
 
 For a detailed explanation on how things work, check out the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
+
+## Build Setup For Back-end
+```bash
+# install dependencies
+pip install python-multipart
+pip install uvicorn
+pip install fastapi
+
+# open services
+uvicorn apiCore:app --reload --port 8000 --host 0.0.0.0
+```
 
 ## Developer log
 ```bash
