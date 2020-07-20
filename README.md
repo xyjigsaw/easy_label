@@ -6,6 +6,8 @@
 
 > **Database** structure will be shared **soon**.
 
+> Front-end and Back-end are both independent.
+
 ## Functions or Features
 - Parse PDF paper into texts
 - Add new entity class
