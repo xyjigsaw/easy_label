@@ -275,7 +275,7 @@ async def unzip(request: ZIPItem):
     cmd = 'unzip -o upload/' + filePath + ' -d upload/' + addProjectName
     os.system(cmd)
 
-    base = 'upload\\' + addProjectName
+    base = 'upload/' + addProjectName
     parser = Parser('cermine')
     output_texts_ls = []
     thread_pool = []
@@ -296,12 +296,14 @@ async def unzip(request: ZIPItem):
         print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Unzip Error No Papers in zip')
         return {"message": 'No Papers in zip', 'time': time.time() - start, 'data': ''}
     try:
-        db_insert_project(p_id, 'upload/' + addProjectName, addProjectName, len(output_texts_ls))
+        file_num = 0
         for item in output_texts_ls:
             try:
                 db_insert_file(item['name'], item['path'], item['texts'], p_id)
+                file_num += 1
             except Exception as e:
                 pass
+        db_insert_project(p_id, 'upload/' + addProjectName, addProjectName, file_num)
         print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Unzip Success')
         return {"message": "success", 'time': time.time() - start, 'data': ''}
     except Exception as e:
