@@ -1,12 +1,8 @@
 <template>
   <div>
     <el-row justify="space-around" style="background-color: #FFFFFF; box-shadow: 0 0 5px #dddddd; padding: 10px;margin: 5px;">
-      <el-col :span="3">
+      <el-col :span="6">
         <el-button type="text">Project Name: {{ name }}</el-button>
-      </el-col>
-
-      <el-col :span="3">
-        <el-button type="text">Path: {{ path }}</el-button>
       </el-col>
 
       <el-col :span="2">

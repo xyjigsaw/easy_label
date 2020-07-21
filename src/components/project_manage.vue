@@ -145,6 +145,7 @@
             if (response.data['message'] === 'success') {
               this.$notify({
                 title: 'Success',
+                duration: 0,
                 message: 'Cost: ' + response.data['time'] + 's',
                 type: 'success'
               });

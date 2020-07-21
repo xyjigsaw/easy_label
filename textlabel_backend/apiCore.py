@@ -9,6 +9,7 @@ import uvicorn
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+import threading
 import time
 import os
 import uuid
@@ -19,7 +20,6 @@ from db_toolkit import db_get_project, db_insert_project, db_delete_project, db_
 from toolkit.pdf_parser import Parser
 from readXML import PaperXML
 from wsCore import users, routes
-
 
 app = FastAPI(routes=routes)
 
@@ -40,6 +40,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 #############################################
 # Basic
@@ -235,6 +236,31 @@ def findAllFile(base):
                 yield fullname
 
 
+class ParseThread(threading.Thread):
+    def __init__(self, tmpName, addProjectName):
+        threading.Thread.__init__(self)
+        self.parser = Parser('cermine')
+        self.tmpName = tmpName
+        self.addProjectName = addProjectName
+        self.output_texts = None
+
+    def run(self):
+        print('Start Parsing ' + self.tmpName)
+        try:
+            self.parser.parse('text', self.tmpName, 'upload/' + self.addProjectName + '/parse', 50)
+            paper = PaperXML(
+                'upload/' + self.addProjectName + '/parse/' + self.tmpName[self.tmpName.rfind('/') + 1:-3] + 'cermine.xml')
+            texts = paper.get_secs()
+            self.output_texts = {'texts': texts, 'name': self.tmpName[self.tmpName.rfind('/') + 1:-4], 'path': self.tmpName}
+        except Exception as e:
+            pass
+        print('Done')
+
+    def getResult(self):
+        if self.output_texts is not None:
+            return self.output_texts
+
+
 class ZIPItem(BaseModel):
     filePath: str = None
     addProjectName: str = None
@@ -252,17 +278,17 @@ async def unzip(request: ZIPItem):
     base = 'upload\\' + addProjectName
     parser = Parser('cermine')
     output_texts_ls = []
+    thread_pool = []
     for i in findAllFile(base):
         if '__MACOSX' not in i:
             tmpName = i.replace('\\', '/')
             print(tmpName)
-            try:
-                parser.parse('text', tmpName, 'upload/' + addProjectName + '/parse', 50)
-                paper = PaperXML('upload/' + addProjectName + '/parse/' + tmpName[tmpName.rfind('/') + 1:-3] + 'cermine.xml')
-                texts = paper.get_secs()
-                output_texts_ls.append({'texts': texts, 'name': tmpName[tmpName.rfind('/') + 1:-4], 'path': tmpName})
-            except Exception as e:
-                pass
+            thread_pool.append(ParseThread(tmpName, addProjectName))
+    for th in thread_pool:
+        th.start()
+    for th in thread_pool:
+        th.join()
+        output_texts_ls.append(th.getResult())
 
     p_id = str(uuid.uuid4())
     p_id = ''.join(p_id.split('-'))
@@ -285,7 +311,6 @@ async def unzip(request: ZIPItem):
 
 if __name__ == '__main__':
     uvicorn.run(app=app, host="127.0.0.1", port=8000, workers=1)
-
 
 # uvicorn apiCore:app --reload --port 8000 --host 0.0.0.0
 # pip install python-multipart
