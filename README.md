@@ -44,6 +44,10 @@ npm run build --report
 For a detailed explanation on how things work, check out the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
 
 ## Build Setup For Back-end
+
+Add Vue Project Host in [origins](textlabel_backend/apiCore.py) For Security
+Configure Database in [config](textlabel_backend/db_toolkit.py)
+
 ```bash
 # install dependencies
 pip install python-multipart

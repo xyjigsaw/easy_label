@@ -24,7 +24,7 @@
       >
         <i class="el-icon-upload"></i>
         <div class="el-upload__text">Drag ZIP here, or <em>Click</em></div>
-        <div class="el-upload__tip" slot="tip">ZIP Only and Size < 1GB</div>
+        <div class="el-upload__tip" slot="tip">ZIP Only & No Spaces In ZIP Name</div>
       </el-upload>
 
       <div slot="footer" class="dialog-footer">
@@ -40,7 +40,7 @@
         border
         highlight-current-row
         v-loading="loading"
-        element-loading-text="Analyzing..."
+        element-loading-text="Parsing PDF, Please Do not Leave, 10-20s/1PDF"
         element-loading-spinner="el-icon-loading"
         element-loading-background="rgba(0, 0, 0, 0.8)">
         <el-table-column label="ID" prop="p_id" width="280"></el-table-column>
@@ -113,6 +113,8 @@
       },
 
       addProject(){
+        this.addProjectName = this.addProjectName.trim();
+        this.addProjectName = this.addProjectName.replace(/\s+/g, '_')
         if(this.addProjectName === '') {
           this.$notify({
             title: 'Warning',
