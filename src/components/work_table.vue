@@ -178,7 +178,7 @@
                 cancelButtonText: 'Exit',
                 type: 'warning'
               }).then(() => {
-                this.$router.push({path: '/home/class_manage', query: {p_id: this.$route.query.p_id, name: this.$route.query.name, path: this.$route.query.path}});
+                this.$router.push({path: '/home/class_manage', query: {p_id: this.$route.query.p_id, name: this.$route.query.name, path: this.$route.query.path, total: this.$route.query.total}});
               }).catch(() => {
                 this.$router.push("/home/project_manage");
               });
