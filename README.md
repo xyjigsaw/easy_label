@@ -9,7 +9,7 @@
 > Front-end and Back-end are both independent.
 
 ## Functions or Features
-- Parse PDF paper into texts
+- Parse PDF paper into texts(multithreading)
 - Add new entity class
 - Mark entities in texts
 - Support multi-user collaboration
