@@ -282,8 +282,9 @@
       },
 
       display_content(decorated_text){
+        decorated_text = decorated_text.replace(/\n/g, '\n<hr/>');
         document.getElementById("text_detail").innerHTML="<div style=\"box-shadow: 0 0 2px #dddddd; margin: 10px; padding:20px; border-radius: 5px; " +
-          "line-height: 26px;\">" + decorated_text + "</div>";
+          "line-height: 26px; text-align: left\">" + decorated_text + "</div>";
         this.click_check();
       },
 
@@ -409,13 +410,20 @@
         this.$router.push("/home/project_manage");
       },
 
+      count_str_len(text, str){
+        let regex = new RegExp(str, 'g');
+        let result = text.match(regex);
+        return !result ? 0 : result.length
+      },
+
       selectText(){
         try{
           let selected=window.getSelection().toString();
+          selected = selected.trim();
           if(selected != null){
             let range = window.getSelection().getRangeAt(0);
             let base = 0;
-            let preElement = range.endContainer;
+            let preElement = range.startContainer;
             while(preElement.previousSibling){
               base += preElement.previousSibling.textContent.length;
               preElement = preElement.previousSibling;
