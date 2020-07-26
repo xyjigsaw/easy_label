@@ -31,7 +31,7 @@
     name: "home",
     data() {
       return {
-        isCollapse: false
+        isCollapse: true,
       };
     },
     methods: {

@@ -38,13 +38,14 @@
 
       </el-main>
 
-      <el-aside width="330px" style="height: 1000px;background-color: #FFFFFF; box-shadow: 0 0 5px #dddddd; padding:5px; margin: 5px 5px 5px 0;">
+      <el-aside width="400px" style="height: 1000px;background-color: #FFFFFF; box-shadow: 0 0 5px #dddddd; padding:5px; margin: 5px 5px 5px 0;">
         <el-row>
-          <el-button type="text">{{ name }}</el-button>
+          <el-button type="text">Project: {{ name }}</el-button>
           <el-button type="text">Users: {{ onlineUsers }}</el-button>
+          <el-button type="primary" icon="el-icon-document" v-show="this.pdf_page_count > 0" @click="showPDF = ! showPDF" size="mini" plain></el-button>
         </el-row>
 
-        <div class="pdf_div">
+        <div v-show="this.showPDF && this.pdf_page_count > 0" class="pdf_div" style="background-color: #FFFFFF; box-shadow: 0 0 5px #dddddd; padding:2px; margin: 1px;">
           <pdf
             :src="pdfUrl"
             ref="ref"
@@ -54,12 +55,17 @@
             @page-loaded="pdf_cur_page=$event"
             @loaded="loadPdfHandler">
           </pdf>
+          <el-row>
+            <el-button type="primary" icon="el-icon-caret-left" @click="changePdfPage(0)" size="mini" plain></el-button>
+            <el-button type="primary" icon="el-icon-caret-right" @click="changePdfPage(1)" size="mini" plain></el-button>
+          </el-row>
         </div>
 
         <el-table
           :data="tableData.slice((currentPage - 1) * pageSize, currentPage*pageSize)"
           border
           :highlight-current-row="true"
+          :row-style="{height:'8px'}" :cell-style="{padding:'5px 0'}"
           style="width: 100%; font-size: 10px">
           <el-table-column fixed prop="file_name" label="Name"></el-table-column>
           <el-table-column fixed prop="version" label="Ver." width="48"></el-table-column>
@@ -166,6 +172,7 @@
         pdfUrl: '',
         pdf_cur_page: 1,
         pdf_page_count: 0,
+        showPDF: true,
       };
     },
     methods: {
@@ -284,6 +291,7 @@
           });
         }
         this.see_PDF(info);
+        this.showPDF = true;
         this.edit_fid = info['f_id'];
         this.edit_text = info['text'];
         this.edit_entity_list = eval(info['entity_list']);
