@@ -14,6 +14,7 @@
     "element-ui": "^2.13.2",
     "goeasy": "^1.0.17",
     "vue": "^2.5.2",
+    "vue-pdf": "^4.1.0",
     "vue-router": "^3.0.1"
   },
   "devDependencies": {

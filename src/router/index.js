@@ -23,7 +23,8 @@ export default new Router({
       children: [
         {path: 'class_manage', name: 'class_manage', component: class_manage},
         {path: 'project_manage', name: 'project_manage', component: project_manage},
-        {path: 'work_table', name: 'work_table', component: work_table, meta: {ws_port: 'ws://192.168.0.4:8000/ws'}},
+        {path: 'work_table', name: 'work_table', component: work_table, meta:
+            {ws_port: 'ws://192.168.0.4:8000/ws', pdf_port: 'http://192.168.0.4:8000/get_file/'}},
       ]
     },
     {

@@ -35,6 +35,7 @@
           <el-button v-if="edit_fid" type="text">{{ tableData[edit_table_pos]['file_name'] }}</el-button>
           <div id="text_detail" @mouseup="selectText" @click="deleteEntity"></div>
         </div>
+
       </el-main>
 
       <el-aside width="330px" style="height: 1000px;background-color: #FFFFFF; box-shadow: 0 0 5px #dddddd; padding:5px; margin: 5px 5px 5px 0;">
@@ -42,6 +43,19 @@
           <el-button type="text">{{ name }}</el-button>
           <el-button type="text">Users: {{ onlineUsers }}</el-button>
         </el-row>
+
+        <div class="pdf_div">
+          <pdf
+            :src="pdfUrl"
+            ref="ref"
+            class="pdf"
+            :page="pdf_cur_page"
+            @num-pages="pdf_page_count=$event"
+            @page-loaded="pdf_cur_page=$event"
+            @loaded="loadPdfHandler">
+          </pdf>
+        </div>
+
         <el-table
           :data="tableData.slice((currentPage - 1) * pageSize, currentPage*pageSize)"
           border
@@ -111,7 +125,11 @@
 
 <script>
   import Vue from 'vue'
+  import pdf from 'vue-pdf';
   export default {
+    components:{
+      pdf
+    },
     data() {
       return {
         ws: null,
@@ -144,6 +162,10 @@
         logTable: [],
 
         onlineUsers: null,
+
+        pdfUrl: '',
+        pdf_cur_page: 1,
+        pdf_page_count: 0,
       };
     },
     methods: {
@@ -252,7 +274,6 @@
           });
           return;
         }
-
         if(this.edit_fid){
           this.change_status(this.edit_table_pos, 0, true);
           this.$notify({
@@ -262,6 +283,7 @@
             type: 'info'
           });
         }
+        this.see_PDF(info);
         this.edit_fid = info['f_id'];
         this.edit_text = info['text'];
         this.edit_entity_list = eval(info['entity_list']);
@@ -524,6 +546,31 @@
       openMessage() {
         let wsInfo = {'message': {'p_id': this.p_id}, 'subject': 'online'}
         this.ws.send(JSON.stringify(wsInfo));
+      },
+
+      see_PDF(info) {
+        let pdf_path = info['file_path'];
+        pdf_path = pdf_path.replace(/\//g, '@@@');
+        this.pdfUrl = pdf.createLoadingTask(this.$route.meta.pdf_port + pdf_path);
+        console.log(this.$route.meta.pdf_port + pdf_path);
+        this.pdfUrl.promise.then(pdf => {
+          this.pdf_page_count = pdf.numPages;
+        }).catch(err => {
+          console.log(err)
+        });
+      },
+
+      loadPdfHandler(e) {
+        this.pdf_cur_page = 1;
+      },
+
+      changePdfPage(val) {
+        if(val === 0 && this.pdf_cur_page > 1) {
+          this.pdf_cur_page --
+        }
+        if(val === 1 && this.pdf_cur_page < this.pdf_page_count) {
+          this.pdf_cur_page ++;
+        }
       },
 
     },
