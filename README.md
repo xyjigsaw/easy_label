@@ -58,6 +58,7 @@ Configure Database in [config](textlabel_backend/db_toolkit.py)
 pip install python-multipart
 pip install uvicorn
 pip install fastapi
+pip install aiofiles
 
 # open services
 uvicorn apiCore:app --reload --port 8000 --host 0.0.0.0

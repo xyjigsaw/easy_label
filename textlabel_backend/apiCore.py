@@ -8,6 +8,7 @@
 import uvicorn
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.responses import FileResponse
 from pydantic import BaseModel
 import threading
 import time
@@ -19,6 +20,7 @@ from db_toolkit import db_get_project, db_insert_project, db_delete_project, db_
     db_update_entity_list, db_insert_entity_class, db_change_status
 from toolkit.pdf_parser import Parser
 from readXML import PaperXML
+from readXML_grobid import PaperXMLGrobid
 from wsCore import users, routes
 
 app = FastAPI(routes=routes)
@@ -30,7 +32,9 @@ origins = [
     "http://10.10.10.1:8082",
     "http://10.10.10.1:8081",
     "http://10.10.10.1:8080",
-    "http:192.169.0.3:8000",
+    "http://10.10.10.2:8080",
+    "http://192.168.0.3:8080",
+    "http://192.168.0.4:8080",
 ]
 
 app.add_middleware(
@@ -239,7 +243,7 @@ def findAllFile(base):
 class ParseThread(threading.Thread):
     def __init__(self, tmpName, addProjectName):
         threading.Thread.__init__(self)
-        self.parser = Parser('cermine')
+        self.parser = Parser('grobid')
         self.tmpName = tmpName
         self.addProjectName = addProjectName
         self.output_texts = None
@@ -251,6 +255,7 @@ class ParseThread(threading.Thread):
             paper = PaperXML(
                 'upload/' + self.addProjectName + '/parse/' + self.tmpName[self.tmpName.rfind('/') + 1:-3] + 'cermine.xml')
             texts = paper.get_secs()
+
             self.output_texts = {'texts': texts, 'name': self.tmpName[self.tmpName.rfind('/') + 1:-4], 'path': self.tmpName}
         except Exception as e:
             pass
@@ -275,8 +280,7 @@ async def unzip(request: ZIPItem):
     cmd = 'unzip -o upload/' + filePath + ' -d upload/' + addProjectName
     os.system(cmd)
 
-    base = 'upload/' + addProjectName
-    parser = Parser('cermine')
+    base = 'upload/' + addProjectName  # Windows is \\
     output_texts_ls = []
     thread_pool = []
     for i in findAllFile(base):
@@ -311,8 +315,16 @@ async def unzip(request: ZIPItem):
         return {"message": str(e), 'time': time.time() - start, 'data': ''}
 
 
+@app.get("/get_file/{file_path}")
+async def download_file(file_path: str):
+    file_path = file_path.replace('@@@', '/')
+    print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Get File: ' + file_path)
+    return FileResponse(file_path)
+
+
 if __name__ == '__main__':
     uvicorn.run(app=app, host="127.0.0.1", port=8000, workers=1)
 
 # uvicorn apiCore:app --reload --port 8000 --host 0.0.0.0
 # pip install python-multipart
+# pip install aiofiles
