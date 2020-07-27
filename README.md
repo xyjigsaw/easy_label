@@ -4,8 +4,6 @@
 
 > A Vue.js project (front-end interface) for marking entities in texts(especially pdf paper).
 
-> **Database** structure will be shared **soon**.
-
 > Front-end and Back-end are both independent.
 
 ## Functions or Features
@@ -13,6 +11,7 @@
 - Add new entity class
 - Mark entities in texts
 - Support multi-user collaboration
+
 
 ## Preview
 - Project Management
@@ -23,6 +22,12 @@
 
 - Work Table
 ![](easy_mark3.png)
+
+
+## Database
+MySQL
+
+User should import [structure](label_sys.sql) to MySQL.
 
 
 ## Build Setup For Front-end
@@ -43,7 +48,7 @@ npm run build --report
 
 For a detailed explanation on how things work, check out the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
 
-## Build Setup For Back-end
+## Build Setup For [Back-end](textlabel_backend)
 
 Add Vue Project Host in [origins](textlabel_backend/apiCore.py) For Security
 Configure Database in [config](textlabel_backend/db_toolkit.py)
