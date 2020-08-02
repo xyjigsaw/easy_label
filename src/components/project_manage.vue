@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-row justify="space-around" style="background-color: #FFFFFF; box-shadow: 0 0 5px #dddddd; padding: 10px;margin: 5px;">
-      <el-button type="primary" icon="el-icon-plus" @click="addProjectVisible = true">Add Project</el-button>
+      <el-button type="primary" icon="el-icon-folder-add" @click="addProjectVisible = true">Add Project</el-button>
     </el-row>
 
     <el-dialog title="Add Project" :visible.sync="addProjectVisible" width="30%">
@@ -33,6 +33,36 @@
       </div>
     </el-dialog>
 
+    <el-dialog title="Add More Files" :visible.sync="moreFileVisible" width="30%">
+      <el-card shadow="always">
+        <el-button type="text">Project: {{moreFileInfo['name']}}</el-button>
+        <el-button type="text">Path: {{moreFileInfo['path']}}</el-button>
+        <el-button type="text">Created Time: {{moreFileInfo['time']}}</el-button>
+      </el-card>
+      <br>
+      <el-upload
+        class="upload-zip-add"
+        ref="upload_add"
+        drag
+        action="/api/file_upload_more"
+        :limit=1
+        :file-list="moreList"
+        :on-success="handleSuccessAdd"
+        :on-error="handleErrorAdd"
+        :auto-upload="false"
+        accept=".zip"
+      >
+        <i class="el-icon-upload"></i>
+        <div class="el-upload__text">Drag ZIP here, or <em>Click</em></div>
+        <div class="el-upload__tip" slot="tip">ZIP Only & No Spaces In ZIP Name</div>
+      </el-upload>
+
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="cancelAddFile">Cancel</el-button>
+        <el-button type="primary" @click="moreFile2Project">Submit</el-button>
+      </div>
+    </el-dialog>
+
     <div class="table-div" style="box-shadow: 0 0 5px #dddddd;margin: 5px;">
       <el-table
         :data="tableData.filter(data => !tableSearch || data.name.toLowerCase().includes(tableSearch.toLowerCase()))"
@@ -40,7 +70,7 @@
         border
         highlight-current-row
         v-loading="loading"
-        element-loading-text="Parsing PDF, Please Do not Leave, 10-20s/1PDF"
+        element-loading-text="Parsing PDF, Please Do not Leave, 10s/PDF"
         element-loading-spinner="el-icon-loading"
         element-loading-background="rgba(0, 0, 0, 0.8)">
         <el-table-column label="ID" prop="p_id" width="280"></el-table-column>
@@ -49,7 +79,7 @@
         <el-table-column label="Files" sortable prop="total" width="90"></el-table-column>
         <el-table-column label="Created Time" prop="time"></el-table-column>
         <el-table-column
-          width="290"
+          width="375"
           align="right">
           <template slot="header" slot-scope="scope">
             <el-input
@@ -60,6 +90,7 @@
           <template slot-scope="scope">
             <el-button size="mini" type="success" icon="el-icon-edit-outline" @click="tagFile(scope.$index, scope.row)">Mark</el-button>
             <el-button size="mini" type="warning" icon="el-icon-collection-tag" @click="editClass(scope.$index, scope.row)">Class</el-button>
+            <el-button size="mini" type="primary" icon="el-icon-plus" @click="addFile(scope.$index, scope.row)">Add</el-button>
             <el-button size="mini" type="danger" icon="el-icon-delete" @click="deleteProject(scope.$index, scope.row)">Delete</el-button>
           </template>
         </el-table-column>
@@ -83,6 +114,11 @@
         addProjectName: '',
         addProjectVisible: false,
 
+        moreFileInfo: '',
+        moreFileVisible: false,
+        moreList: [],
+
+
       }
     },
 
@@ -99,6 +135,9 @@
         this.$axios.post('/api/fetch_project', url_data).then(response => {
           if (response.data['message'] === 'success') {
             this.tableData = response.data['data'];
+            for(let i = 0; i < this.tableData.length; i++){
+              this.tableData[i]['total'] *= 1;
+            }
             this.projectNameList = [];
             for(let i = 0; i < this.tableData.length; i++){
               this.projectNameList.push(this.tableData[i]['name']);
@@ -187,6 +226,80 @@
           message: err
         });
         this.fileList = [];
+      },
+
+      addFile(index, row){
+        this.moreFileVisible = true;
+        this.moreFileInfo = row;
+      },
+
+      cancelAddFile(){
+        this.moreFileVisible = false;
+        this.moreList = [];
+        this.moreFileInfo = '';
+      },
+
+      moreFile2Project(){
+        this.$refs.upload_add.submit();
+      },
+
+      handleSuccessAdd(response_up, moreFile, moreList) {
+        if(response_up['message'] === 'success'){
+          this.loading = true;
+          this.moreFileVisible = false;
+          let url_data={
+            p_id: this.moreFileInfo['p_id'],
+            filePath: response_up['filepath'],
+            projectName: this.moreFileInfo['name'],
+          };
+          this.$axios.post('/api/unzip_more', url_data).then(response => {
+            if (response.data['message'] === 'success') {
+              this.$notify({
+                title: 'Success',
+                duration: 0,
+                message: 'Cost: ' + response.data['time'] + 's',
+                type: 'success'
+              });
+              this.loading = false;
+              this.moreList = [];
+              this.fetch_project();
+            }else{
+              this.$notify.error({
+                title: 'Error',
+                message: 'Unknown error'
+              });
+              this.moreList = [];
+              this.loading = false;
+            }
+          }).catch(err => {
+            this.$notify.error({
+              title: 'Error',
+              duration: 0,
+              message: err
+            });
+            this.moreList = [];
+            this.moreFileInfo = '';
+            this.loading = false;
+          });
+        }else{
+          this.$notify.error({
+            title: 'Error',
+            duration: 0,
+            message: response_up['message']
+          });
+          this.moreList = [];
+          this.moreFileInfo = '';
+        }
+      },
+
+      handleErrorAdd(err, moreFile, moreList) {
+        this.$notify.error({
+          title: 'Error',
+          duration: 0,
+          message: err
+        });
+        this.moreList = [];
+        this.moreFileInfo = '';
       },
 
       editClass(index, row) {
