@@ -20,6 +20,9 @@ config = {
     'cursorclass': pymysql.cursors.DictCursor,
 }
 
+# groupleader
+# onlyleaders
+
 
 def db_get_project():
     try:
@@ -75,6 +78,25 @@ def db_insert_project(p_id, path, name, total):
                 cursor.close()
                 con.close()
                 return 'success'
+        else:
+            return 'error'
+    except Exception as e:
+        print('Exception: ', e)
+        return 'error'
+
+
+def db_update_project(p_id, file_num):
+    try:
+        con = pymysql.connect(**config)
+        sql = "UPDATE project SET total = total + %s WHERE p_id = %s"
+
+        if sql != '':
+            cursor = con.cursor()
+            cursor.execute(sql, (file_num, p_id))
+            con.commit()
+            cursor.close()
+            con.close()
+            return 'success'
         else:
             return 'error'
     except Exception as e:

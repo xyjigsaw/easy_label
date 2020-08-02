@@ -14,10 +14,11 @@ import threading
 import time
 import os
 import uuid
+import platform
 
 from db_toolkit import db_get_project, db_insert_project, db_delete_project, db_insert_file, \
     db_get_entity_class, db_update_entity_class, db_delete_entity_class, db_fetch_file_limit, \
-    db_update_entity_list, db_insert_entity_class, db_change_status
+    db_update_entity_list, db_insert_entity_class, db_change_status, db_update_project
 from toolkit.pdf_parser import Parser
 from readXML import PaperXML
 from readXML_grobid import PaperXMLGrobid
@@ -252,10 +253,15 @@ class ParseThread(threading.Thread):
         print('Start Parsing ' + self.tmpName)
         try:
             self.parser.parse('text', self.tmpName, 'upload/' + self.addProjectName + '/parse', 50)
+
             paper = PaperXML(
                 'upload/' + self.addProjectName + '/parse/' + self.tmpName[self.tmpName.rfind('/') + 1:-3] + 'cermine.xml')
             texts = paper.get_secs()
-
+            '''
+            paper = PaperXMLGrobid(
+                'upload/' + self.addProjectName + '/parse/' + self.tmpName[self.tmpName.rfind('/') + 1:-3] + 'grobid.xml')
+            texts = paper.get_paper_abstract()
+            '''
             self.output_texts = {'texts': texts, 'name': self.tmpName[self.tmpName.rfind('/') + 1:-4], 'path': self.tmpName}
         except Exception as e:
             pass
@@ -277,10 +283,17 @@ async def unzip(request: ZIPItem):
     filePath = request.filePath
     addProjectName = request.addProjectName
     # unzip upload/test.zip -d upload/xx
-    cmd = 'unzip -o upload/' + filePath + ' -d upload/' + addProjectName
+    os.makedirs('upload/' + addProjectName + '/')
+    add_id = str(uuid.uuid4())
+    add_id = ''.join(add_id.split('-'))
+    cmd = 'unzip -o upload/' + filePath + ' -d upload/' + addProjectName + '/' + add_id
     os.system(cmd)
+    sys = platform.system()
+    if sys == "Windows":
+        base = 'upload\\' + addProjectName + '\\' + add_id
+    else:
+        base = 'upload/' + addProjectName + '/' + add_id
 
-    base = 'upload/' + addProjectName  # Windows is \\
     output_texts_ls = []
     thread_pool = []
     for i in findAllFile(base):
@@ -320,6 +333,76 @@ async def download_file(file_path: str):
     file_path = file_path.replace('@@@', '/')
     print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Get File: ' + file_path)
     return FileResponse(file_path)
+
+
+@app.post("/file_upload_more")
+async def file_upload_more(file: UploadFile = File(...)):
+    start = time.time()
+    try:
+        res = await file.read()
+        with open('upload/sys_addMoreFileDirectory/' + file.filename, "wb") as f:
+            f.write(res)
+        print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'File Upload Add Success')
+        return {"message": "success", 'time': time.time() - start, 'filepath': file.filename}
+    except Exception as e:
+        print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'File Upload Add Error')
+        return {"message": str(e), 'time': time.time() - start, 'filepath': file.filename}
+
+
+class ZIPItemMore(BaseModel):
+    p_id: str = None
+    filePath: str = None  # zip path
+    projectName: str = None
+
+
+@app.post('/unzip_more')
+async def unzip_more(request: ZIPItemMore):
+    start = time.time()
+    filePath = request.filePath
+    p_id = request.p_id
+    projectName = request.projectName
+
+    add_id = str(uuid.uuid4())
+    add_id = ''.join(add_id.split('-'))
+    cmd = 'unzip -o upload/sys_addMoreFileDirectory/' + filePath + ' -d upload/' + projectName + '/' + add_id
+    os.system(cmd)
+
+    sys = platform.system()
+    if sys == "Windows":
+        base = 'upload\\' + projectName + '\\' + add_id
+    else:
+        base = 'upload/' + projectName + '/' + add_id
+
+    output_texts_ls = []
+    thread_pool = []
+    for i in findAllFile(base):
+        if '__MACOSX' not in i:
+            tmpName = i.replace('\\', '/')
+            print(tmpName)
+            thread_pool.append(ParseThread(tmpName, projectName))
+    for th in thread_pool:
+        th.start()
+    for th in thread_pool:
+        th.join()
+        output_texts_ls.append(th.getResult())
+
+    if len(output_texts_ls) == 0:
+        print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Unzip Error No Papers in zip')
+        return {"message": 'No Papers in zip', 'time': time.time() - start, 'data': ''}
+    try:
+        file_num = 0
+        for item in output_texts_ls:
+            try:
+                db_insert_file(item['name'], item['path'], item['texts'], p_id)
+                file_num += 1
+            except Exception as e:
+                pass
+        db_update_project(p_id, file_num)
+        print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Unzip Add Success')
+        return {"message": "success", 'time': time.time() - start, 'data': ''}
+    except Exception as e:
+        print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Unzip Add Error')
+        return {"message": str(e), 'time': time.time() - start, 'data': ''}
 
 
 if __name__ == '__main__':
