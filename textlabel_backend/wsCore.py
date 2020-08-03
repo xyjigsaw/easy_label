@@ -7,10 +7,12 @@
 
 from starlette.endpoints import WebSocketEndpoint
 from starlette.routing import WebSocketRoute
+from db_toolkit import db_change_status
 import json
 
 users = {}
 p_num = {}
+user2file = {}
 
 
 class WSEndPoint(WebSocketEndpoint):
@@ -25,6 +27,9 @@ class WSEndPoint(WebSocketEndpoint):
     async def ws_exit(p_id, socket_ID):
         users.pop(socket_ID)
         print(socket_ID + ' Exit!')
+        if socket_ID in user2file:
+            db_change_status(user2file[socket_ID], 0)
+            del user2file[socket_ID]
         if p_id in p_num:
             p_num[p_id] -= 1
         for user in users:
@@ -63,6 +68,10 @@ class WSEndPoint(WebSocketEndpoint):
         data = json.loads(data)
         subject = data['subject']
         message = data['message']
+
+        if subject == 'lock':
+            user2file[socket_ID] = message['f_id']
+            print(user2file)
 
         if subject == 'offline':
             await self.ws_exit(message['p_id'], socket_ID)
