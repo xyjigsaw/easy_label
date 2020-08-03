@@ -17,11 +17,11 @@ user2file = {}
 
 class WSEndPoint(WebSocketEndpoint):
     @staticmethod
-    async def get_socket_ID(websocket):
+    async def get_socket_ID(websocket):
         socket_str = str(websocket)[1:-1]
         socket_list = socket_str.split(' ')
         socket_ID = socket_list[3]
-        return socket_ID
+        return socket_ID
 
     @staticmethod
     async def ws_exit(p_id, socket_ID):
