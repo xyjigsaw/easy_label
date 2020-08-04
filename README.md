@@ -1,6 +1,6 @@
-# text_label(Easy Mark)
+# text_label (Easy Mark)
 
-![](https://img.shields.io/badge/Status-Developing-brightgreen.svg)
+![](https://img.shields.io/badge/Status-Developed-brightgreen.svg)
 
 > A Vue.js project (front-end interface) for marking entities in texts(especially pdf paper).
 
