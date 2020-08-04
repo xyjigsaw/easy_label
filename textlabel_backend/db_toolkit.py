@@ -20,9 +20,6 @@ config = {
     'cursorclass': pymysql.cursors.DictCursor,
 }
 
-# groupleader
-# onlyleaders
-
 
 def db_get_project():
     try:
