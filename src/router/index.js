@@ -5,7 +5,6 @@ import home from "@/components/home";
 import class_manage from "@/components/class_manage";
 import project_manage from "@/components/project_manage";
 import work_table from "@/components/work_table";
-import ws_service from "@/components/ws_service";
 
 Vue.use(Router)
 
@@ -26,12 +25,6 @@ export default new Router({
         {path: 'work_table', name: 'work_table', component: work_table, meta:
             {ws_port: 'ws://192.168.0.4:8000/ws', pdf_port: 'http://192.168.0.4:8000/get_file/'}},
       ]
-    },
-    {
-      path: '/ws_service',
-      name: 'ws_service',
-      component: ws_service,
-      meta: {ws_port: 'ws://192.168.0.4:8000/ws'}
     },
   ]
 })
