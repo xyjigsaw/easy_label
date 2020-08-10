@@ -15,10 +15,9 @@ import time
 import os
 import uuid
 import platform
+import shutil
 
-from db_toolkit import db_get_project, db_insert_project, db_delete_project, db_insert_file, \
-    db_get_entity_class, db_update_entity_class, db_delete_entity_class, db_fetch_file_limit, \
-    db_update_entity_list, db_insert_entity_class, db_change_status, db_update_project
+import async_db
 from toolkit.pdf_parser import Parser
 from readXML import PaperXML
 from readXML_grobid import PaperXMLGrobid
@@ -60,7 +59,7 @@ class ProjectItem(BaseModel):
 @app.post('/fetch_project')
 async def fetch_project(request: ProjectItem):
     start = time.time()
-    api_data = db_get_project()
+    api_data = await async_db.get_project()
     print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Fetch Project Success')
     return {"message": "success", 'time': time.time() - start, 'data': api_data}
 
@@ -73,7 +72,7 @@ class ClassItem4project(BaseModel):
 async def fetch_class(request: ClassItem4project):
     start = time.time()
     p_id = request.p_id
-    api_data = db_get_entity_class(p_id)
+    api_data = await async_db.get_entity_class(p_id)
     print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Fetch Entity_class Success')
     return {"message": "success", 'time': time.time() - start, 'data': api_data}
 
@@ -93,7 +92,7 @@ async def add_class(request: ClassItem):
         addLabelColor = request.addLabelColor
         addLabelDes = request.addLabelDes
         p_id = request.p_id
-        info = db_insert_entity_class(addLabelName, addLabelColor, addLabelDes, p_id)
+        info = await async_db.insert_entity_class(addLabelName, addLabelColor, addLabelDes, p_id)
         print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Add Entity_class Success')
         return {"message": info, 'time': time.time() - start, 'data': ''}
     except Exception as e:
@@ -116,7 +115,7 @@ async def update_class(request: UpdateClassItem):
         rLabelColor = request.rLabelColor
         rLabelDes = request.rLabelDes
         c_id = request.c_id
-        info = db_update_entity_class(rLabelName, rLabelColor, rLabelDes, c_id)
+        info = await async_db.update_entity_class(rLabelName, rLabelColor, rLabelDes, c_id)
         print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Update Entity_class Success')
         return {"message": info, 'time': time.time() - start, 'data': ''}
     except Exception as e:
@@ -133,7 +132,7 @@ async def delete_class(request: DeleteClassItem):
     start = time.time()
     try:
         c_id = request.c_id
-        info = db_delete_entity_class(c_id)
+        info = await async_db.delete_entity_class(c_id)
         print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Delete Entity_class Success')
         return {"message": info, 'time': time.time() - start, 'data': ''}
     except Exception as e:
@@ -147,12 +146,14 @@ class DeleteProjectItem(BaseModel):
 
 
 @app.post('/delete_project')
-async def delete_class(request: DeleteProjectItem):
+async def delete_project(request: DeleteProjectItem):
     start = time.time()
     try:
         p_id = request.p_id
-        path = request.path
-        info = db_delete_project(p_id)
+        path = request.path + '/'
+        if os.path.exists(path):
+            shutil.rmtree(path)
+        info = await async_db.delete_project(p_id)
         print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Delete Project Success')
         return {"message": info, 'time': time.time() - start, 'data': ''}
     except Exception as e:
@@ -172,7 +173,7 @@ async def fetch_file(request: FileItem):
     p_id = request.p_id
     anchor = request.anchor
     pageSize = request.pageSize
-    api_data = db_fetch_file_limit(p_id, anchor, pageSize)
+    api_data = await async_db.fetch_file_limit(p_id, anchor, pageSize)
     print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Fetch File Success')
     return {"message": "success", 'time': time.time() - start, 'data': api_data}
 
@@ -188,7 +189,7 @@ async def submit_entity_list(request: SubmitFileItem):
     try:
         f_id = request.f_id
         entity_list = request.entity_list
-        info = db_update_entity_list(f_id, entity_list)
+        info = await async_db.update_entity_list(f_id, entity_list)
         print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Submit Entity_list Success')
         return {"message": info, 'time': time.time() - start, 'data': ''}
     except Exception:
@@ -206,7 +207,7 @@ async def change_status(request: StatusItem):
     try:
         f_id = request.f_id
         status = request.status
-        info = db_change_status(f_id, status)
+        info = await async_db.change_status(f_id, status)
         print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'File Status Change Success')
         return {"message": info, 'time': time.time() - start, 'data': ''}
     except Exception:
@@ -253,7 +254,7 @@ class ParseThread(threading.Thread):
         print('Start Parsing ' + self.tmpName)
         try:
             self.parser.parse('text', self.tmpName, 'upload/' + self.addProjectName + '/parse', 50)
-
+            '''
             paper = PaperXML(
                 'upload/' + self.addProjectName + '/parse/' + self.tmpName[self.tmpName.rfind('/') + 1:-3] + 'cermine.xml')
             texts = paper.get_secs()
@@ -261,7 +262,6 @@ class ParseThread(threading.Thread):
             paper = PaperXMLGrobid(
                 'upload/' + self.addProjectName + '/parse/' + self.tmpName[self.tmpName.rfind('/') + 1:-3] + 'grobid.xml')
             texts = paper.get_paper_abstract()
-            '''
             self.output_texts = {'texts': texts, 'name': self.tmpName[self.tmpName.rfind('/') + 1:-4], 'path': self.tmpName}
         except Exception as e:
             pass
@@ -283,7 +283,10 @@ async def unzip(request: ZIPItem):
     filePath = request.filePath
     addProjectName = request.addProjectName
     # unzip upload/test.zip -d upload/xx
-    os.makedirs('upload/' + addProjectName + '/')
+    project_dir = 'upload/' + addProjectName + '/'
+    if os.path.exists(project_dir):
+        shutil.rmtree(project_dir)
+    os.makedirs(project_dir)
     add_id = str(uuid.uuid4())
     add_id = ''.join(add_id.split('-'))
     cmd = 'unzip -o upload/' + filePath + ' -d upload/' + addProjectName + '/' + add_id
@@ -316,11 +319,11 @@ async def unzip(request: ZIPItem):
         file_num = 0
         for item in output_texts_ls:
             try:
-                db_insert_file(item['name'], item['path'], item['texts'], p_id)
+                await async_db.insert_file(item['name'], item['path'], item['texts'], p_id)
                 file_num += 1
             except Exception as e:
                 pass
-        db_insert_project(p_id, 'upload/' + addProjectName, addProjectName, file_num)
+        await async_db.insert_project(p_id, 'upload/' + addProjectName, addProjectName, file_num)
         print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Unzip Success')
         return {"message": "success", 'time': time.time() - start, 'data': ''}
     except Exception as e:
@@ -393,11 +396,11 @@ async def unzip_more(request: ZIPItemMore):
         file_num = 0
         for item in output_texts_ls:
             try:
-                db_insert_file(item['name'], item['path'], item['texts'], p_id)
+                await async_db.insert_file(item['name'], item['path'], item['texts'], p_id)
                 file_num += 1
             except Exception as e:
                 pass
-        db_update_project(p_id, file_num)
+        await async_db.update_project(p_id, file_num)
         print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Unzip Add Success')
         return {"message": "success", 'time': time.time() - start, 'data': ''}
     except Exception as e:
@@ -411,3 +414,4 @@ if __name__ == '__main__':
 # uvicorn apiCore:app --reload --port 8000 --host 0.0.0.0
 # pip install python-multipart
 # pip install aiofiles
+# pip install aiomysql

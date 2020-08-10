@@ -11,6 +11,7 @@
 - Add new entity class
 - Mark entities in texts
 - Support multi-user collaboration
+- Read the database asynchronously
 
 
 ## Preview
@@ -59,6 +60,7 @@ pip install python-multipart
 pip install uvicorn
 pip install fastapi
 pip install aiofiles
+pip install aiomysql
 
 # open services
 uvicorn apiCore:app --reload --port 8000 --host 0.0.0.0
