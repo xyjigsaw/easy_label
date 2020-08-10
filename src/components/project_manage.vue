@@ -128,26 +128,17 @@
 
     methods: {
       fetch_project(){
-        let url_data={
-          p_id: '',
-          name: '',
-        };
-        this.$axios.post('/api/fetch_project', url_data).then(response => {
-          if (response.data['message'] === 'success') {
-            this.tableData = response.data['data'];
-            for(let i = 0; i < this.tableData.length; i++){
-              this.tableData[i]['total'] *= 1;
-            }
-            this.projectNameList = [];
-            for(let i = 0; i < this.tableData.length; i++){
-              this.projectNameList.push(this.tableData[i]['name']);
-            }
+        this.$axios.get('/api/fetch_project').then((response)=> {
+          this.tableData = response.data['data'];
+          for(let i = 0; i < this.tableData.length; i++){
+            this.tableData[i]['total'] *= 1;
           }
-        }).catch(err => {
-          this.$notify.error({
-            title: 'Error',
-            message: err
-          });
+          this.projectNameList = [];
+          for(let i = 0; i < this.tableData.length; i++){
+            this.projectNameList.push(this.tableData[i]['name']);
+          }
+        }).catch((err)=> {
+          this.$notify.error({title: 'Error', message: err});
         });
       },
 

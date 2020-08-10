@@ -135,24 +135,18 @@
     methods: {
       fetch_class() {
         let url_data={
-          p_id: this.p_id,
+          p_id: this.p_id
         };
-        this.$axios.post('/api/fetch_class', url_data).then(response => {
-          if (response.data['message'] === 'success') {
-            this.tableData = response.data['data'];
-            this.classNameList = [];
-            this.classColorList = [];
-            for(let i = 0; i < this.tableData.length; i++){
-              this.classNameList.push(this.tableData[i]['label']);
-              this.classColorList.push(this.tableData[i]['color']);
-            }
-
+        this.$axios.get('/api/fetch_class', {params: url_data}).then(response => {
+          this.tableData = response.data['data'];
+          this.classNameList = [];
+          this.classColorList = [];
+          for(let i = 0; i < this.tableData.length; i++){
+            this.classNameList.push(this.tableData[i]['label']);
+            this.classColorList.push(this.tableData[i]['color']);
           }
         }).catch(err => {
-          this.$notify.error({
-            title: 'Error',
-            message: err
-          });
+          this.$notify.error({title: 'Error', message: err});
         });
       },
 
@@ -181,31 +175,16 @@
             type: 'warning'
           });
         }else{
-          let url_data={
-            addLabelName: this.addLabelName,
-            addLabelColor: this.addLabelColor,
-            addLabelDes: this.addLabelDes,
-            p_id: this.p_id,
-          };
+          let url_data = new FormData();
+          url_data.append('addLabelName', this.addLabelName);
+          url_data.append('addLabelColor', this.addLabelColor);
+          url_data.append('addLabelDes', this.addLabelDes)
+          url_data.append('p_id', this.p_id)
           this.$axios.post('/api/add_class', url_data).then(response => {
-            if (response.data['message'] === 'success') {
-              this.$notify({
-                title: 'Success',
-                message: 'Class submitted successfully',
-                type: 'success'
-              });
-              this.fetch_class();
-            }else{
-              this.$notify.error({
-                title: 'Error',
-                message: 'Unknown error'
-              });
-            }
+            this.$notify({title: 'Success', message: 'Added successfully', type: 'success'});
+            this.fetch_class();
           }).catch(err => {
-            this.$notify.error({
-              title: 'Error',
-              message: err
-            });
+            this.$notify.error({title: 'Error', message: err});
           });
           this.addLabelVisible = false;
           this.addLabelName = '';
@@ -223,15 +202,9 @@
           let url_data={
             c_id: row['c_id'],
           };
-          this.$axios.post('/api/delete_class', url_data).then(response => {
-            if (response.data['message'] === 'success') {
-              this.$notify({
-                title: 'Success',
-                message: 'Deleted successfully',
-                type: 'success'
-              });
-              this.fetch_class();
-            }
+          this.$axios.delete('/api/delete_class', {params: url_data}).then(response => {
+            this.$notify({title: 'Success', message: 'Deleted successfully', type: 'success'});
+            this.fetch_class();
           }).catch(err => {
             this.$notify.error({title: 'Error', message: err});
           });
@@ -264,19 +237,14 @@
         }else if(tmpNameList.indexOf(this.rLabelName) > -1 || tmpColorList.indexOf(this.rLabelColor) > -1){
           this.$notify({title: 'Warning', message: 'Class or color has existed!', type: 'warning'});
         }else{
-          let url_data={
-            rLabelName: this.rLabelName,
-            rLabelColor: this.rLabelColor,
-            rLabelDes: this.rLabelDes,
-            c_id: this.rRow['c_id'],
-          };
-          this.$axios.post('/api/update_class', url_data).then(response => {
-            if (response.data['message'] === 'success') {
-              this.$notify({title: 'Success', message: 'Class updated successfully', type: 'success'});
-              this.fetch_class();
-            }else{
-              this.$notify.error({title: 'Error', message: 'Unknown error'});
-            }
+          let url_data = new FormData();
+          url_data.append('rLabelName', this.rLabelName);
+          url_data.append('rLabelColor', this.rLabelColor);
+          url_data.append('rLabelDes', this.rLabelDes)
+          url_data.append('c_id', this.rRow['c_id'])
+          this.$axios.put('/api/update_class', url_data).then(response => {
+            this.$notify({title: 'Success', message: 'Updated successfully', type: 'success'});
+            this.fetch_class();
           }).catch(err => {
             this.$notify.error({title: 'Error', message: err});
           });
