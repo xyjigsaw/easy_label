@@ -163,59 +163,41 @@
       },
 
       handleSuccess(response_up, file, fileList) {
-        if(response_up['message'] === 'success'){
-          this.filePath = response_up['filepath'];
-          this.loading = true;
-          this.addProjectVisible = false;
-          let url_data={
-            filePath: this.filePath,
-            addProjectName: this.addProjectName,
-          };
-          this.$axios.post('/api/unzip', url_data).then(response => {
-            if (response.data['message'] === 'success') {
-              this.$notify({
-                title: 'Success',
-                duration: 0,
-                message: 'Cost: ' + response.data['time'] + 's',
-                type: 'success'
-              });
-              this.loading = false;
-              this.fileList = [];
-              this.fetch_project();
-            }else{
-              this.$notify.error({
-                title: 'Error',
-                message: 'Unknown error'
-              });
-              this.fileList = [];
-              this.loading = false;
-            }
-          }).catch(err => {
-            this.$notify.error({
-              title: 'Error',
+        this.filePath = response_up['filepath'];
+        this.loading = true;
+        this.addProjectVisible = false;
+        let url_data={
+          filePath: this.filePath,
+          addProjectName: this.addProjectName,
+        };
+        this.$axios.get('/api/unzip', {params: url_data}).then(response => {
+          if (response.data['message'] === 'success') {
+            this.$notify({
+              title: 'Success',
               duration: 0,
-              message: err
+              message: 'Cost: ' + response.data['time'] + 's',
+              type: 'success'
             });
+            this.loading = false;
+            this.fileList = [];
+            this.fetch_project();
+          }else{
+            this.$notify.error({title: 'Error', message: response.data['message']});
             this.fileList = [];
             this.addProjectName = '';
             this.loading = false;
-          });
-        }else{
-          this.$notify.error({
-            title: 'Error',
-            duration: 0,
-            message: response_up['message']
-          });
+          }
+        }).catch(err => {
+          this.$notify.error({title: 'Error', duration: 0, message: err});
           this.fileList = [];
-        }
+          this.addProjectName = '';
+          this.loading = false;
+        });
       },
 
       handleError(err, file, fileList) {
-        this.$notify.error({
-          title: 'Error',
-          duration: 0,
-          message: err
-        });
+        this.$notify.error({title: 'Error', duration: 0, message: err});
+        this.addProjectName = '';
         this.fileList = [];
       },
 
@@ -235,60 +217,39 @@
       },
 
       handleSuccessAdd(response_up, moreFile, moreList) {
-        if(response_up['message'] === 'success'){
-          this.loading = true;
-          this.moreFileVisible = false;
-          let url_data={
-            p_id: this.moreFileInfo['p_id'],
-            filePath: response_up['filepath'],
-            projectName: this.moreFileInfo['name'],
-          };
-          this.$axios.post('/api/unzip_more', url_data).then(response => {
-            if (response.data['message'] === 'success') {
-              this.$notify({
-                title: 'Success',
-                duration: 0,
-                message: 'Cost: ' + response.data['time'] + 's',
-                type: 'success'
-              });
-              this.loading = false;
-              this.moreList = [];
-              this.fetch_project();
-            }else{
-              this.$notify.error({
-                title: 'Error',
-                message: 'Unknown error'
-              });
-              this.moreList = [];
-              this.loading = false;
-            }
-          }).catch(err => {
-            this.$notify.error({
-              title: 'Error',
+        this.loading = true;
+        this.moreFileVisible = false;
+        let url_data={
+          p_id: this.moreFileInfo['p_id'],
+          filePath: response_up['filepath'],
+          projectName: this.moreFileInfo['name'],
+        };
+        this.$axios.get('/api/unzip_more', {params: url_data}).then(response => {
+          if (response.data['message'] === 'success') {
+            this.$notify({
+              title: 'Success',
               duration: 0,
-              message: err
+              message: 'Cost: ' + response.data['time'] + 's',
+              type: 'success'
             });
-            this.moreList = [];
-            this.moreFileInfo = '';
             this.loading = false;
-          });
-        }else{
-          this.$notify.error({
-            title: 'Error',
-            duration: 0,
-            message: response_up['message']
-          });
+            this.moreList = [];
+            this.fetch_project();
+          }else{
+            this.$notify.error({title: 'Error', message: response.data['message']});
+            this.moreList = [];
+            this.loading = false;
+          }
+        }).catch(err => {
+          this.$notify.error({title: 'Error', duration: 0, message: err});
           this.moreList = [];
           this.moreFileInfo = '';
-        }
+          this.loading = false;
+        });
       },
 
       handleErrorAdd(err, moreFile, moreList) {
-        this.$notify.error({
-          title: 'Error',
-          duration: 0,
-          message: err
-        });
+        this.$notify.error({title: 'Error', duration: 0, message: err});
         this.moreList = [];
         this.moreFileInfo = '';
       },
@@ -311,23 +272,13 @@
             p_id: row['p_id'],
             path: row['path']
           };
-          this.$axios.post('/api/delete_project', url_data).then(response => {
-            if (response.data['message'] === 'success') {
-              this.$notify({
-                title: 'Success',
-                message: 'Deleted successfully',
-                type: 'success'
-              });
-              this.fetch_project();
-            }
+          this.$axios.delete('/api/delete_project', {params: url_data}).then(response => {
+            this.$notify({title: 'Success', message: 'Deleted successfully', type: 'success'});
+            this.fetch_project();
           }).catch(err => {
-            this.$notify.error({
-              title: 'Error',
-              message: err
-            });
+            this.$notify.error({title: 'Error', message: err});
           });
         }).catch(() => {
-
         });
       },
 

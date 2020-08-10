@@ -182,10 +182,8 @@
           anchor: anchor,
           pageSize: this.pageSize,
         };
-        this.$axios.post('/api/fetch_file', url_data).then(response => {
-          if (response.data['message'] === 'success') {
-            this.tableData = this.tableData.concat(response.data['data']);
-          }
+        this.$axios.get('/api/fetch_file', {params: url_data}).then(response => {
+          this.tableData = this.tableData.concat(response.data['data']);
         }).catch(err => {
           this.$notify.error({title: 'Error', message: err});
         });
@@ -199,34 +197,31 @@
         let url_data={
           p_id: this.p_id,
         };
-        this.$axios.post('/api/fetch_class', url_data).then(response => {
-          if (response.data['message'] === 'success') {
-            if(response.data['data'].length === 0){
-              this.$confirm('There is no class label in database.', 'WARNING', {
-                confirmButtonText: 'Add Class',
-                cancelButtonText: 'Exit',
-                type: 'warning'
-              }).then(() => {
-                this.$router.push({path: '/home/class_manage', query: {p_id: this.$route.query.p_id, name: this.$route.query.name, path: this.$route.query.path, total: this.$route.query.total}});
-              }).catch(() => {
-                this.$router.push("/home/project_manage");
-              });
-            }
-
-            this.classNameList = [];
-            this.classColorList = [];
-
-            let class_str = '';
-            for(let i = 0; i < response.data['data'].length; i++){
-              this.classNameList.push(response.data['data'][i]['label']);
-              this.classColorList.push(response.data['data'][i]['color']);
-              class_str = this.addClassLabelStr(class_str, response.data['data'][i]['label'], response.data['data'][i]['color']);
-            }
-            this.checkList = [];
-            this.gen_labels(class_str, '#class_ls');
-            this.lazy_fetch_file(0);
-
+        this.$axios.get('/api/fetch_class', {params: url_data}).then(response => {
+          if(response.data['data'].length === 0){
+            this.$confirm('There is no class label in database.', 'WARNING', {
+              confirmButtonText: 'Add Class',
+              cancelButtonText: 'Exit',
+              type: 'warning'
+            }).then(() => {
+              this.$router.push({path: '/home/class_manage', query: {p_id: this.$route.query.p_id, name: this.$route.query.name, path: this.$route.query.path, total: this.$route.query.total}});
+            }).catch(() => {
+              this.$router.push("/home/project_manage");
+            });
           }
+
+          this.classNameList = [];
+          this.classColorList = [];
+
+          let class_str = '';
+          for(let i = 0; i < response.data['data'].length; i++){
+            this.classNameList.push(response.data['data'][i]['label']);
+            this.classColorList.push(response.data['data'][i]['color']);
+            class_str = this.addClassLabelStr(class_str, response.data['data'][i]['label'], response.data['data'][i]['color']);
+          }
+          this.checkList = [];
+          this.gen_labels(class_str, '#class_ls');
+          this.lazy_fetch_file(0);
         }).catch(err => {
           this.$notify.error({title: 'Error', message: err});
         });
@@ -404,29 +399,23 @@
           cancelButtonText: 'Cancel',
           type: 'warning'
         }).then(() => {
-          let url_data={
-            f_id: this.edit_fid,
-            entity_list: this.edit_entity_list,
-          };
-          this.$axios.post('/api/submit_entity_list', url_data).then(response => {
-            if (response.data['message'] === 'success') {
-              this.tableData[this.edit_table_pos]['version']++;
-              this.tableData[this.edit_table_pos]['entity_list'] = this.edit_entity_list;
-              this.$notify({
-                title: 'Success',
-                message: 'Entity submitted successfully',
-                type: 'success'
-              });
-              this.logTable.unshift({'Event': "Save", 'f_id': this.edit_fid, 'info': 'Save to database successfully',
-                'entity_list_len': this.edit_entity_list.length});
+          let url_data = new FormData();
+          url_data.append('f_id', this.edit_fid);
+          url_data.append('entity_list', JSON.stringify(this.edit_entity_list));
+          this.$axios.put('/api/update_entity_list', url_data).then(response => {
+            this.tableData[this.edit_table_pos]['version']++;
+            this.tableData[this.edit_table_pos]['entity_list'] = this.edit_entity_list;
+            this.$notify({
+              title: 'Success',
+              message: 'Entity submitted successfully',
+              type: 'success'
+            });
+            this.logTable.unshift({'Event': "Save", 'f_id': this.edit_fid, 'info': 'Save to database successfully',
+              'entity_list_len': this.edit_entity_list.length});
 
-              let wsInfo = {'message': {'p_id': this.p_id, 'f_id': this.edit_fid, 'entity_list': this.edit_entity_list,
-                  'version': this.tableData[this.edit_table_pos]['version'], 'pos': this.edit_table_pos}, 'subject': 'save'}
-              this.sendMessage(JSON.stringify(wsInfo));
-
-            }else{
-              this.$notify.error({title: 'Error', message: 'Unknown Error'});
-            }
+            let wsInfo = {'message': {'p_id': this.p_id, 'f_id': this.edit_fid, 'entity_list': this.edit_entity_list,
+                'version': this.tableData[this.edit_table_pos]['version'], 'pos': this.edit_table_pos}, 'subject': 'save'}
+            this.sendMessage(JSON.stringify(wsInfo));
           }).catch(err => {
             this.$notify.error({title: 'Error', message: err});
             this.logTable.unshift({'Event': "Save", 'f_id': this.edit_fid, 'info': 'Cannot Save to database',
@@ -504,17 +493,14 @@
 
       change_status(pos, status, send_msg){
         if(this.edit_fid){
-          let url_data={
-            f_id: this.edit_fid,
-            status: status,
-          };
-          this.$axios.post('/api/change_status', url_data).then(response => {
-            if (response.data['message'] === 'success') {
-              this.tableData[pos]['is_edit'] = status;
-              let wsInfo = {'message': {'p_id': this.p_id, 'f_id': this.edit_fid, 'status': status, 'pos': pos}, 'subject': 'lock'}
-              if(send_msg){
-                this.sendMessage(JSON.stringify(wsInfo));
-              }
+          let url_data = new FormData();
+          url_data.append('f_id', this.edit_fid);
+          url_data.append('status', status);
+          this.$axios.put('/api/change_status', url_data).then(response => {
+            this.tableData[pos]['is_edit'] = status;
+            let wsInfo = {'message': {'p_id': this.p_id, 'f_id': this.edit_fid, 'status': status, 'pos': pos}, 'subject': 'lock'}
+            if(send_msg){
+              this.sendMessage(JSON.stringify(wsInfo));
             }
           }).catch(err => {
           });

@@ -6,7 +6,7 @@
 # *_*coding:utf-8 *_*
 
 import uvicorn
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, Query, Form, APIRouter, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import FileResponse
 from pydantic import BaseModel
@@ -24,26 +24,7 @@ from readXML_grobid import PaperXMLGrobid
 from wsCore import users, routes
 
 app = FastAPI(routes=routes)
-
-origins = [
-    "http://localhost",
-    "http://localhost:8080",
-    "http://localhost:8000",
-    "http://10.10.10.1:8082",
-    "http://10.10.10.1:8081",
-    "http://10.10.10.1:8080",
-    "http://10.10.10.2:8080",
-    "http://192.168.0.3:8080",
-    "http://192.168.0.4:8080",
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+router = APIRouter()
 
 
 #############################################
@@ -51,131 +32,84 @@ app.add_middleware(
 #############################################
 
 
-class ProjectItem(BaseModel):
-    p_id: str = ''
-    name: str = ''
-
-
-@app.post('/fetch_project')
-async def fetch_project(request: ProjectItem):
+@router.get('/fetch_project')
+async def fetch_project():
     start = time.time()
     api_data = await async_db.get_project()
     print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Fetch Project Success')
-    return {"message": "success", 'time': time.time() - start, 'data': api_data}
+    return {'time': time.time() - start, 'data': api_data}
 
 
-class ClassItem4project(BaseModel):
-    p_id: str = ''
-
-
-@app.post('/fetch_class')
-async def fetch_class(request: ClassItem4project):
+@router.delete('/delete_project')
+async def delete_project(
+        p_id: str = Query(..., description='project id', example='4beb867cdeba4f259d9202f5bc58a47c'),
+        path: str = Query(..., description='project path', example='/upload/xxx')
+):
     start = time.time()
-    p_id = request.p_id
+    path = path + '/'
+    if os.path.exists(path):
+        shutil.rmtree(path)
+    info = await async_db.delete_project(p_id)
+    print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Delete Project Success')
+    return {'time': time.time() - start}
+
+
+@router.get('/fetch_class')
+async def fetch_class(
+        p_id: str = Query(..., description='project id', example='4beb867cdeba4f259d9202f5bc58a47c')
+):
+    start = time.time()
     api_data = await async_db.get_entity_class(p_id)
     print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Fetch Entity_class Success')
-    return {"message": "success", 'time': time.time() - start, 'data': api_data}
+    return {'time': time.time() - start, 'data': api_data}
 
 
-class ClassItem(BaseModel):
-    addLabelName: str = ''
-    addLabelColor: str = ''
-    addLabelDes: str = ''
-    p_id: str = ''
-
-
-@app.post('/add_class')
-async def add_class(request: ClassItem):
+@router.post('/add_class')
+async def add_class(
+        addLabelName: str = Form(..., description='label name', example='Name'),
+        addLabelColor: str = Form(..., description='label color', example='#00CCFF'),
+        addLabelDes: str = Form(..., description='label description', example='Entity'),
+        p_id: str = Form(..., description='project id', example='4beb867cdeba4f259d9202f5bc58a47c')
+):
     start = time.time()
-    try:
-        addLabelName = request.addLabelName
-        addLabelColor = request.addLabelColor
-        addLabelDes = request.addLabelDes
-        p_id = request.p_id
-        info = await async_db.insert_entity_class(addLabelName, addLabelColor, addLabelDes, p_id)
-        print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Add Entity_class Success')
-        return {"message": info, 'time': time.time() - start, 'data': ''}
-    except Exception as e:
-        print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Add Entity_class Error')
-        return {"message": str(e), 'time': time.time() - start, 'data': ''}
+    info = await async_db.insert_entity_class(addLabelName, addLabelColor, addLabelDes, p_id)
+    print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Add Entity_class Success')
+    return {'time': time.time() - start}
 
 
-class UpdateClassItem(BaseModel):
-    rLabelName: str = ''
-    rLabelColor: str = ''
-    rLabelDes: str = ''
-    c_id: str = ''
-
-
-@app.post('/update_class')
-async def update_class(request: UpdateClassItem):
+@router.put('/update_class')
+async def update_class(
+        rLabelName: str = Form(..., description='modified label name', example='Name'),
+        rLabelColor: str = Form(..., description='modified color', example='#00CCFF'),
+        rLabelDes: str = Form(..., description='modified description', example='Entity'),
+        c_id: str = Form(..., description='label/class id', example='4beb867cdeba4f259d9202f5bc58a47c')
+):
     start = time.time()
-    try:
-        rLabelName = request.rLabelName
-        rLabelColor = request.rLabelColor
-        rLabelDes = request.rLabelDes
-        c_id = request.c_id
-        info = await async_db.update_entity_class(rLabelName, rLabelColor, rLabelDes, c_id)
-        print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Update Entity_class Success')
-        return {"message": info, 'time': time.time() - start, 'data': ''}
-    except Exception as e:
-        print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Update Entity_class Error')
-        return {"message": str(e), 'time': time.time() - start, 'data': ''}
+    info = await async_db.update_entity_class(rLabelName, rLabelColor, rLabelDes, c_id)
+    print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Update Entity_class Success')
+    return {'time': time.time() - start}
 
 
-class DeleteClassItem(BaseModel):
-    c_id: str = ''
-
-
-@app.post('/delete_class')
-async def delete_class(request: DeleteClassItem):
+@router.delete('/delete_class')
+async def delete_class(
+        c_id: str = Query(..., description='label/class id', example='4beb867cdeba4f259d9202f5bc58a47c')
+):
     start = time.time()
-    try:
-        c_id = request.c_id
-        info = await async_db.delete_entity_class(c_id)
-        print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Delete Entity_class Success')
-        return {"message": info, 'time': time.time() - start, 'data': ''}
-    except Exception as e:
-        print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Delete Entity_class Error')
-        return {"message": str(e), 'time': time.time() - start, 'data': ''}
+    info = await async_db.delete_entity_class(c_id)
+    print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Delete Entity_class Success')
+    return {'time': time.time() - start}
 
 
-class DeleteProjectItem(BaseModel):
-    p_id: str = ''
-    path: str = ''
-
-
-@app.post('/delete_project')
-async def delete_project(request: DeleteProjectItem):
+@router.get('/fetch_file')
+async def fetch_file(
+        p_id: str = Query(..., description='project id', example='4beb867cdeba4f259d9202f5bc58a47c'),
+        anchor: int = Query(0, description='start row', example=11),
+        pageSize: int = Query(8, description='page size', example=10)
+):
     start = time.time()
-    try:
-        p_id = request.p_id
-        path = request.path + '/'
-        if os.path.exists(path):
-            shutil.rmtree(path)
-        info = await async_db.delete_project(p_id)
-        print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Delete Project Success')
-        return {"message": info, 'time': time.time() - start, 'data': ''}
-    except Exception as e:
-        print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Delete Project Error')
-        return {"message": str(e), 'time': time.time() - start, 'data': ''}
-
-
-class FileItem(BaseModel):
-    p_id: str = ''
-    anchor: int = 0
-    pageSize: int = None
-
-
-@app.post('/fetch_file')
-async def fetch_file(request: FileItem):
-    start = time.time()
-    p_id = request.p_id
-    anchor = request.anchor
-    pageSize = request.pageSize
     api_data = await async_db.fetch_file_limit(p_id, anchor, pageSize)
     print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Fetch File Success')
-    return {"message": "success", 'time': time.time() - start, 'data': api_data}
+    return {'time': time.time() - start, 'data': api_data}
 
 
 class SubmitFileItem(BaseModel):
@@ -183,36 +117,28 @@ class SubmitFileItem(BaseModel):
     entity_list: list = []
 
 
-@app.post('/submit_entity_list')
-async def submit_entity_list(request: SubmitFileItem):
+@router.put('/update_entity_list')
+async def update_entity_list(
+        f_id: str = Form(..., description='file id', example='Name'),
+        entity_list: str = Form(..., description='entity list string type',
+                                example='[{"end": 366, "type": "Research", "word": "entities", "start": 358}]')
+):
     start = time.time()
-    try:
-        f_id = request.f_id
-        entity_list = request.entity_list
-        info = await async_db.update_entity_list(f_id, entity_list)
-        print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Submit Entity_list Success')
-        return {"message": info, 'time': time.time() - start, 'data': ''}
-    except Exception:
-        return {"message": "error", 'time': time.time() - start, 'data': ''}
+    entity_list = eval(entity_list)
+    info = await async_db.update_entity_list(f_id, entity_list)
+    print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Submit Entity_list Success')
+    return {'time': time.time() - start}
 
 
-class StatusItem(BaseModel):
-    f_id: str = ''
-    status: int = None
-
-
-@app.post('/change_status')
-async def change_status(request: StatusItem):
+@router.put('/change_status')
+async def change_status(
+        f_id: str = Form(..., description='file id', example='Name'),
+        status: int = Form(0, description='file lock', example=1)
+):
     start = time.time()
-    try:
-        f_id = request.f_id
-        status = request.status
-        info = await async_db.change_status(f_id, status)
-        print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'File Status Change Success')
-        return {"message": info, 'time': time.time() - start, 'data': ''}
-    except Exception:
-        print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'File Status Change Error')
-        return {"message": "error", 'time': time.time() - start, 'data': ''}
+    info = await async_db.change_status(f_id, status)
+    print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'File Status Change Success')
+    return {'time': time.time() - start}
 
 
 #############################################
@@ -220,18 +146,14 @@ async def change_status(request: StatusItem):
 #############################################
 
 
-@app.post("/file_upload")
-async def file_upload(file: UploadFile = File(...)):
+@router.post("/file_upload")
+async def file_upload(file: UploadFile = File(..., description='ZIP file to upload. (Use multipart form)')):
     start = time.time()
-    try:
-        res = await file.read()
-        with open('upload/' + file.filename, "wb") as f:
-            f.write(res)
-        print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'File Upload Success')
-        return {"message": "success", 'time': time.time() - start, 'filepath': file.filename}
-    except Exception as e:
-        print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'File Upload Error')
-        return {"message": str(e), 'time': time.time() - start, 'filepath': file.filename}
+    res = await file.read()
+    with open('upload/' + file.filename, "wb") as f:
+        f.write(res)
+    print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'File Upload Success')
+    return {'time': time.time() - start, 'filepath': file.filename}
 
 
 def findAllFile(base):
@@ -260,9 +182,11 @@ class ParseThread(threading.Thread):
             texts = paper.get_secs()
             '''
             paper = PaperXMLGrobid(
-                'upload/' + self.addProjectName + '/parse/' + self.tmpName[self.tmpName.rfind('/') + 1:-3] + 'grobid.xml')
+                'upload/' + self.addProjectName + '/parse/' + self.tmpName[
+                                                              self.tmpName.rfind('/') + 1:-3] + 'grobid.xml')
             texts = paper.get_paper_abstract()
-            self.output_texts = {'texts': texts, 'name': self.tmpName[self.tmpName.rfind('/') + 1:-4], 'path': self.tmpName}
+            self.output_texts = {'texts': texts, 'name': self.tmpName[self.tmpName.rfind('/') + 1:-4],
+                                 'path': self.tmpName}
         except Exception as e:
             pass
         print('Done')
@@ -272,17 +196,12 @@ class ParseThread(threading.Thread):
             return self.output_texts
 
 
-class ZIPItem(BaseModel):
-    filePath: str = None
-    addProjectName: str = None
-
-
-@app.post('/unzip')
-async def unzip(request: ZIPItem):
+@router.get('/unzip')
+async def unzip(
+        filePath: str = Query(..., description='zip file path', example='upload/xxx'),
+        addProjectName: str = Query(..., description='project name', example='xxx')
+):
     start = time.time()
-    filePath = request.filePath
-    addProjectName = request.addProjectName
-    # unzip upload/test.zip -d upload/xx
     project_dir = 'upload/' + addProjectName + '/'
     if os.path.exists(project_dir):
         shutil.rmtree(project_dir)
@@ -302,7 +221,6 @@ async def unzip(request: ZIPItem):
     for i in findAllFile(base):
         if '__MACOSX' not in i:
             tmpName = i.replace('\\', '/')
-            print(tmpName)
             thread_pool.append(ParseThread(tmpName, addProjectName))
     for th in thread_pool:
         th.start()
@@ -314,7 +232,7 @@ async def unzip(request: ZIPItem):
     p_id = ''.join(p_id.split('-'))
     if len(output_texts_ls) == 0:
         print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Unzip Error No Papers in zip')
-        return {"message": 'No Papers in zip', 'time': time.time() - start, 'data': ''}
+        return {"message": 'No Papers in zip', 'time': time.time() - start}
     try:
         file_num = 0
         for item in output_texts_ls:
@@ -331,40 +249,30 @@ async def unzip(request: ZIPItem):
         return {"message": str(e), 'time': time.time() - start, 'data': ''}
 
 
-@app.get("/get_file/{file_path}")
+@router.get("/get_file/{file_path}")
 async def download_file(file_path: str):
     file_path = file_path.replace('@@@', '/')
     print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Get File: ' + file_path)
     return FileResponse(file_path)
 
 
-@app.post("/file_upload_more")
-async def file_upload_more(file: UploadFile = File(...)):
+@router.post("/file_upload_more")
+async def file_upload_more(file: UploadFile = File(..., description='ZIP file to upload. (Use multipart form)')):
     start = time.time()
-    try:
-        res = await file.read()
-        with open('upload/sys_addMoreFileDirectory/' + file.filename, "wb") as f:
-            f.write(res)
-        print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'File Upload Add Success')
-        return {"message": "success", 'time': time.time() - start, 'filepath': file.filename}
-    except Exception as e:
-        print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'File Upload Add Error')
-        return {"message": str(e), 'time': time.time() - start, 'filepath': file.filename}
+    res = await file.read()
+    with open('upload/sys_addMoreFileDirectory/' + file.filename, "wb") as f:
+        f.write(res)
+    print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'File Upload Add Success')
+    return {'time': time.time() - start, 'filepath': file.filename}
 
 
-class ZIPItemMore(BaseModel):
-    p_id: str = None
-    filePath: str = None  # zip path
-    projectName: str = None
-
-
-@app.post('/unzip_more')
-async def unzip_more(request: ZIPItemMore):
+@router.get('/unzip_more')
+async def unzip_more(
+        p_id: str = Query(..., description='project id', example='4beb867cdeba4f259d9202f5bc58a47c'),
+        filePath: str = Query(..., description='zip file path', example='upload/xxx'),
+        projectName: str = Query(..., description='project name', example='xxx'),
+):
     start = time.time()
-    filePath = request.filePath
-    p_id = request.p_id
-    projectName = request.projectName
-
     add_id = str(uuid.uuid4())
     add_id = ''.join(add_id.split('-'))
     cmd = 'unzip -o upload/sys_addMoreFileDirectory/' + filePath + ' -d upload/' + projectName + '/' + add_id
@@ -381,7 +289,6 @@ async def unzip_more(request: ZIPItemMore):
     for i in findAllFile(base):
         if '__MACOSX' not in i:
             tmpName = i.replace('\\', '/')
-            print(tmpName)
             thread_pool.append(ParseThread(tmpName, projectName))
     for th in thread_pool:
         th.start()
@@ -408,10 +315,19 @@ async def unzip_more(request: ZIPItemMore):
         return {"message": str(e), 'time': time.time() - start, 'data': ''}
 
 
+app.include_router(router)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 if __name__ == '__main__':
     uvicorn.run(app=app, host="127.0.0.1", port=8000, workers=1)
 
 # uvicorn apiCore:app --reload --port 8000 --host 0.0.0.0
 # pip install python-multipart
 # pip install aiofiles
-# pip install aiomysql
