@@ -7,7 +7,7 @@
 
 from starlette.endpoints import WebSocketEndpoint
 from starlette.routing import WebSocketRoute
-from db_toolkit import db_change_status
+from async_db import change_status
 import json
 
 users = {}
@@ -17,7 +17,7 @@ user2file = {}
 
 class WSEndPoint(WebSocketEndpoint):
     @staticmethod
-    async def get_socket_ID(websocket):
+    async def get_socket_ID(websocket):
         socket_str = str(websocket)[1:-1]
         socket_list = socket_str.split(' ')
         socket_ID = socket_list[3]
@@ -28,8 +28,9 @@ class WSEndPoint(WebSocketEndpoint):
         users.pop(socket_ID)
         print(socket_ID + ' Exit!')
         if socket_ID in user2file:
-            db_change_status(user2file[socket_ID], 0)
+            await change_status(user2file[socket_ID], 0)
             del user2file[socket_ID]
+            print('del', user2file)
         if p_id in p_num:
             p_num[p_id] -= 1
         for user in users:
@@ -69,7 +70,7 @@ class WSEndPoint(WebSocketEndpoint):
         subject = data['subject']
         message = data['message']
 
-        if subject == 'lock':
+        if subject == 'lock' and int(message['status']) == 1:
             user2file[socket_ID] = message['f_id']
             print(user2file)
 

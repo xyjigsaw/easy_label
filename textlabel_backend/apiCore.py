@@ -22,6 +22,7 @@ from toolkit.pdf_parser import Parser
 from readXML import PaperXML
 from readXML_grobid import PaperXMLGrobid
 from wsCore import users, routes
+from model import *
 
 app = FastAPI(routes=routes)
 router = APIRouter()
@@ -32,7 +33,7 @@ router = APIRouter()
 #############################################
 
 
-@router.get('/fetch_project')
+@router.get('/fetch_project', response_model=GetResponse)
 async def fetch_project():
     start = time.time()
     api_data = await async_db.get_project()
@@ -40,7 +41,7 @@ async def fetch_project():
     return {'time': time.time() - start, 'data': api_data}
 
 
-@router.delete('/delete_project')
+@router.delete('/delete_project', response_model=SuccessResponse)
 async def delete_project(
         p_id: str = Query(..., description='project id', example='4beb867cdeba4f259d9202f5bc58a47c'),
         path: str = Query(..., description='project path', example='/upload/xxx')
@@ -54,7 +55,7 @@ async def delete_project(
     return {'time': time.time() - start}
 
 
-@router.get('/fetch_class')
+@router.get('/fetch_class', response_model=GetResponse)
 async def fetch_class(
         p_id: str = Query(..., description='project id', example='4beb867cdeba4f259d9202f5bc58a47c')
 ):
@@ -64,7 +65,7 @@ async def fetch_class(
     return {'time': time.time() - start, 'data': api_data}
 
 
-@router.post('/add_class')
+@router.post('/add_class', response_model=SuccessResponse)
 async def add_class(
         addLabelName: str = Form(..., description='label name', example='Name'),
         addLabelColor: str = Form(..., description='label color', example='#00CCFF'),
@@ -77,7 +78,7 @@ async def add_class(
     return {'time': time.time() - start}
 
 
-@router.put('/update_class')
+@router.put('/update_class', response_model=SuccessResponse)
 async def update_class(
         rLabelName: str = Form(..., description='modified label name', example='Name'),
         rLabelColor: str = Form(..., description='modified color', example='#00CCFF'),
@@ -90,7 +91,7 @@ async def update_class(
     return {'time': time.time() - start}
 
 
-@router.delete('/delete_class')
+@router.delete('/delete_class', response_model=SuccessResponse)
 async def delete_class(
         c_id: str = Query(..., description='label/class id', example='4beb867cdeba4f259d9202f5bc58a47c')
 ):
@@ -100,7 +101,7 @@ async def delete_class(
     return {'time': time.time() - start}
 
 
-@router.get('/fetch_file')
+@router.get('/fetch_file', response_model=GetResponse)
 async def fetch_file(
         p_id: str = Query(..., description='project id', example='4beb867cdeba4f259d9202f5bc58a47c'),
         anchor: int = Query(0, description='start row', example=11),
@@ -112,12 +113,7 @@ async def fetch_file(
     return {'time': time.time() - start, 'data': api_data}
 
 
-class SubmitFileItem(BaseModel):
-    f_id: str = ''
-    entity_list: list = []
-
-
-@router.put('/update_entity_list')
+@router.put('/update_entity_list', response_model=SuccessResponse)
 async def update_entity_list(
         f_id: str = Form(..., description='file id', example='Name'),
         entity_list: str = Form(..., description='entity list string type',
@@ -130,7 +126,7 @@ async def update_entity_list(
     return {'time': time.time() - start}
 
 
-@router.put('/change_status')
+@router.put('/change_status', response_model=SuccessResponse)
 async def change_status(
         f_id: str = Form(..., description='file id', example='Name'),
         status: int = Form(0, description='file lock', example=1)
@@ -146,7 +142,7 @@ async def change_status(
 #############################################
 
 
-@router.post("/file_upload")
+@router.post("/file_upload", response_model=UploadResponse)
 async def file_upload(file: UploadFile = File(..., description='ZIP file to upload. (Use multipart form)')):
     start = time.time()
     res = await file.read()
@@ -196,7 +192,7 @@ class ParseThread(threading.Thread):
             return self.output_texts
 
 
-@router.get('/unzip')
+@router.get('/unzip', response_model=UnzipResponse)
 async def unzip(
         filePath: str = Query(..., description='zip file path', example='upload/xxx'),
         addProjectName: str = Query(..., description='project name', example='xxx')
@@ -243,10 +239,10 @@ async def unzip(
                 pass
         await async_db.insert_project(p_id, 'upload/' + addProjectName, addProjectName, file_num)
         print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Unzip Success')
-        return {"message": "success", 'time': time.time() - start, 'data': ''}
+        return {"message": "success", 'time': time.time() - start}
     except Exception as e:
         print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Unzip Error')
-        return {"message": str(e), 'time': time.time() - start, 'data': ''}
+        return {"message": str(e), 'time': time.time() - start}
 
 
 @router.get("/get_file/{file_path}")
@@ -256,7 +252,7 @@ async def download_file(file_path: str):
     return FileResponse(file_path)
 
 
-@router.post("/file_upload_more")
+@router.post("/file_upload_more", response_model=UploadResponse)
 async def file_upload_more(file: UploadFile = File(..., description='ZIP file to upload. (Use multipart form)')):
     start = time.time()
     res = await file.read()
@@ -266,7 +262,7 @@ async def file_upload_more(file: UploadFile = File(..., description='ZIP file to
     return {'time': time.time() - start, 'filepath': file.filename}
 
 
-@router.get('/unzip_more')
+@router.get('/unzip_more', response_model=UnzipResponse)
 async def unzip_more(
         p_id: str = Query(..., description='project id', example='4beb867cdeba4f259d9202f5bc58a47c'),
         filePath: str = Query(..., description='zip file path', example='upload/xxx'),
@@ -298,7 +294,7 @@ async def unzip_more(
 
     if len(output_texts_ls) == 0:
         print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Unzip Error No Papers in zip')
-        return {"message": 'No Papers in zip', 'time': time.time() - start, 'data': ''}
+        return {"message": 'No Papers in zip', 'time': time.time() - start}
     try:
         file_num = 0
         for item in output_texts_ls:
@@ -309,10 +305,10 @@ async def unzip_more(
                 pass
         await async_db.update_project(p_id, file_num)
         print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Unzip Add Success')
-        return {"message": "success", 'time': time.time() - start, 'data': ''}
+        return {"message": "success", 'time': time.time() - start}
     except Exception as e:
         print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Unzip Add Error')
-        return {"message": str(e), 'time': time.time() - start, 'data': ''}
+        return {"message": str(e), 'time': time.time() - start}
 
 
 app.include_router(router)
