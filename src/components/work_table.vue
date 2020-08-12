@@ -544,7 +544,7 @@
 
       see_PDF(info) {
         let pdf_path = info['file_path'];
-        pdf_path = pdf_path.replace(/\//g, '@@@');
+        pdf_path = btoa(pdf_path);
         this.pdfUrl = pdf.createLoadingTask(this.$route.meta.pdf_port + pdf_path);
         console.log(this.$route.meta.pdf_port + pdf_path);
         this.pdfUrl.promise.then(pdf => {
