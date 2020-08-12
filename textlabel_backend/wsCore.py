@@ -26,11 +26,9 @@ class WSEndPoint(WebSocketEndpoint):
     @staticmethod
     async def ws_exit(p_id, socket_ID):
         users.pop(socket_ID)
-        print(socket_ID + ' Exit!')
         if socket_ID in user2file:
             await change_status(user2file[socket_ID], 0)
             del user2file[socket_ID]
-            print('del', user2file)
         if p_id in p_num:
             p_num[p_id] -= 1
         for user in users:
@@ -72,7 +70,6 @@ class WSEndPoint(WebSocketEndpoint):
 
         if subject == 'lock' and int(message['status']) == 1:
             user2file[socket_ID] = message['f_id']
-            print(user2file)
 
         if subject == 'offline':
             await self.ws_exit(message['p_id'], socket_ID)
