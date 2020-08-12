@@ -44,7 +44,7 @@
         class="upload-zip-add"
         ref="upload_add"
         drag
-        action="/api/file_upload_more"
+        action="/api/file_upload"
         :limit=1
         :file-list="moreList"
         :on-success="handleSuccessAdd"

@@ -9,13 +9,12 @@ import uvicorn
 from fastapi import FastAPI, Query, Form, APIRouter, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import FileResponse
-from pydantic import BaseModel
 import threading
 import time
 import os
 import uuid
-import platform
 import shutil
+import base64
 
 import async_db
 from toolkit.pdf_parser import Parser
@@ -26,6 +25,7 @@ from model import *
 
 app = FastAPI(routes=routes)
 router = APIRouter()
+os.makedirs('upload', exist_ok=True)
 
 
 #############################################
@@ -172,7 +172,7 @@ class ParseThread(threading.Thread):
         print('Start Parsing ' + self.tmpName)
         try:
             self.parser.parse('text', self.tmpName, 'upload/' + self.addProjectName + '/parse', 50)
-            '''
+
             paper = PaperXML(
                 'upload/' + self.addProjectName + '/parse/' + self.tmpName[self.tmpName.rfind('/') + 1:-3] + 'cermine.xml')
             texts = paper.get_secs()
@@ -180,6 +180,7 @@ class ParseThread(threading.Thread):
             paper = PaperXMLGrobid(
                 'upload/' + self.addProjectName + '/parse/' + self.tmpName[
                                                               self.tmpName.rfind('/') + 1:-3] + 'grobid.xml')
+            '''
             texts = paper.get_paper_abstract()
             self.output_texts = {'texts': texts, 'name': self.tmpName[self.tmpName.rfind('/') + 1:-4],
                                  'path': self.tmpName}
@@ -206,12 +207,7 @@ async def unzip(
     add_id = ''.join(add_id.split('-'))
     cmd = 'unzip -o upload/' + filePath + ' -d upload/' + addProjectName + '/' + add_id
     os.system(cmd)
-    sys = platform.system()
-    if sys == "Windows":
-        base = 'upload\\' + addProjectName + '\\' + add_id
-    else:
-        base = 'upload/' + addProjectName + '/' + add_id
-
+    base = os.path.join('upload', addProjectName, add_id)
     output_texts_ls = []
     thread_pool = []
     for i in findAllFile(base):
@@ -247,19 +243,9 @@ async def unzip(
 
 @router.get("/get_file/{file_path}")
 async def download_file(file_path: str):
-    file_path = file_path.replace('@@@', '/')
+    file_path = base64.b64decode(file_path).decode()
     print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Get File: ' + file_path)
     return FileResponse(file_path)
-
-
-@router.post("/file_upload_more", response_model=UploadResponse)
-async def file_upload_more(file: UploadFile = File(..., description='ZIP file to upload. (Use multipart form)')):
-    start = time.time()
-    res = await file.read()
-    with open('upload/sys_addMoreFileDirectory/' + file.filename, "wb") as f:
-        f.write(res)
-    print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'File Upload Add Success')
-    return {'time': time.time() - start, 'filepath': file.filename}
 
 
 @router.get('/unzip_more', response_model=UnzipResponse)
@@ -271,15 +257,9 @@ async def unzip_more(
     start = time.time()
     add_id = str(uuid.uuid4())
     add_id = ''.join(add_id.split('-'))
-    cmd = 'unzip -o upload/sys_addMoreFileDirectory/' + filePath + ' -d upload/' + projectName + '/' + add_id
+    cmd = 'unzip -o upload/' + filePath + ' -d upload/' + projectName + '/' + add_id
     os.system(cmd)
-
-    sys = platform.system()
-    if sys == "Windows":
-        base = 'upload\\' + projectName + '\\' + add_id
-    else:
-        base = 'upload/' + projectName + '/' + add_id
-
+    base = os.path.join('upload', projectName, add_id)
     output_texts_ls = []
     thread_pool = []
     for i in findAllFile(base):
