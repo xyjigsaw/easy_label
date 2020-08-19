@@ -72,7 +72,9 @@ async def update_project(p_id, file_num):
 
 async def insert_file(name, path, text, p_id):
     sql = "INSERT INTO file(file_name, file_path, version, entity_list, text, p_id, is_edit) VALUES(%s, %s, %s, %s, %s, %s, %s)"
-    ret = await mysql_select(sql, name, path, 0, json.dumps([]), text, p_id, 0, db='label_sys')
+    ret = await mysql_select(sql, name, path, 0, json.dumps({'text_detail_0': [],
+                                                             'text_detail_1': [],
+                                                             'text_detail_2': []}), json.dumps(text), p_id, 0, db='label_sys')
     return 'success'
 
 
@@ -118,4 +120,3 @@ async def change_status(f_id, status):
     sql = "UPDATE file SET is_edit = %s WHERE f_id = %s"
     ret = await mysql_select(sql, status, f_id, db='label_sys')
     return 'success'
-

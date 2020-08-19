@@ -172,7 +172,7 @@ class ParseThread(threading.Thread):
         print('Start Parsing ' + self.tmpName)
         try:
             self.parser.parse('text', self.tmpName, 'upload/' + self.addProjectName + '/parse', 50)
-
+            '''
             paper = PaperXML(
                 'upload/' + self.addProjectName + '/parse/' + self.tmpName[self.tmpName.rfind('/') + 1:-3] + 'cermine.xml')
             texts = paper.get_secs()
@@ -180,9 +180,10 @@ class ParseThread(threading.Thread):
             paper = PaperXMLGrobid(
                 'upload/' + self.addProjectName + '/parse/' + self.tmpName[
                                                               self.tmpName.rfind('/') + 1:-3] + 'grobid.xml')
-            '''
-            texts = paper.get_paper_abstract()
-            self.output_texts = {'texts': texts, 'name': self.tmpName[self.tmpName.rfind('/') + 1:-4],
+            self.output_texts = {'texts': {'text_detail_0': paper.get_paper_abstract(),
+                                           'text_detail_1': paper.get_paper_introduction(),
+                                           'text_detail_2': paper.get_paper_conclusion()},
+                                 'name': self.tmpName[self.tmpName.rfind('/') + 1:-4],
                                  'path': self.tmpName}
         except Exception as e:
             pass
