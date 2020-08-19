@@ -33,7 +33,14 @@
           <p v-show="!edit_fid">Click <i class="el-icon-edit"></i> In The Table On The Right To Start</p>
           <el-button v-if="edit_fid" type="text">Version: {{ tableData[edit_table_pos]['version'] }} </el-button>
           <el-button v-if="edit_fid" type="text">{{ tableData[edit_table_pos]['file_name'] }}</el-button>
-          <div id="text_detail" @mouseup="selectText" @click="deleteEntity"></div>
+          <div id="text_detail_group">
+            <el-button v-if="edit_fid" type="text">Abstract</el-button>
+            <div id="text_detail_0" @mouseup="selectText('text_detail_0')" @click="deleteEntity('text_detail_0')"></div>
+            <el-button v-if="edit_fid" type="text">Introduction</el-button>
+            <div id="text_detail_1" @mouseup="selectText('text_detail_1')" @click="deleteEntity('text_detail_1')"></div>
+            <el-button v-if="edit_fid" type="text">Conclusion</el-button>
+            <div id="text_detail_2" @mouseup="selectText('text_detail_2')" @click="deleteEntity('text_detail_2')"></div>
+          </div>
         </div>
 
       </el-main>
@@ -161,7 +168,7 @@
         edit_text: '',
         edit_entity_list: [],
         edit_table_pos: null,
-        raw_text: null,
+        raw_text: [],
 
         logVis: false,
         logDirection: 'btt',
@@ -288,9 +295,14 @@
         this.see_PDF(info);
         this.showPDF = true;
         this.edit_fid = info['f_id'];
-        this.edit_text = info['text'];
-        this.edit_entity_list = eval(info['entity_list']);
-        this.raw_text = this.edit_entity_list.length === 0;
+        this.edit_text = JSON.parse(info['text']);
+        this.edit_entity_list = JSON.parse(info['entity_list']);
+
+        for(let key in this.edit_entity_list){
+          if(this.edit_entity_list.hasOwnProperty(key))
+            this.raw_text.push(this.edit_entity_list[key].length === 0)
+        }
+
         this.checkList = [];
         this.labelIns.checkList = this.checkList;
         for(let i = 0; i < this.tableData.length; i++){
@@ -299,17 +311,30 @@
           }
         }
         this.change_status(this.edit_table_pos, 1, true);
-        let decorated_text = this.genContent(this.edit_entity_list, this.edit_text);
-        this.display_content(decorated_text);
-
+        for(let elementID in this.edit_entity_list){
+          if(this.edit_entity_list.hasOwnProperty(elementID)){
+            let decorated_text = this.genContent(this.edit_entity_list[elementID], this.edit_text[elementID]);
+            this.display_content(decorated_text, elementID);
+          }
+        }
         this.logTable.unshift({'Event': "Mark", 'f_id': this.edit_fid, 'info': 'Edit file to mark entity',
-          'entity_list_len': this.edit_entity_list.length});
+          'entity_list_len': this.count_entity_num()});
       },
 
-      display_content(decorated_text){
+      count_entity_num(){
+        let entity_list_len = 0;
+        for(let key in this.edit_entity_list){
+          if(this.edit_entity_list.hasOwnProperty(key)){
+            entity_list_len += this.edit_entity_list[key].length;
+          }
+        }
+        return entity_list_len;
+      },
+
+      display_content(decorated_text, elementID){
         decorated_text = decorated_text.replace(/\n/g, '\n<hr/>');
-        document.getElementById("text_detail").innerHTML="<div style=\"box-shadow: 0 0 2px #dddddd; margin: 10px; padding:20px; border-radius: 5px; " +
-          "line-height: 26px; text-align: left\">" + decorated_text + "</div>";
+        document.getElementById(elementID).innerHTML="<div style=\"box-shadow: 0 0 2px #aeaeae; margin: 10px 10px 20px 10px; padding:20px; border-radius: 5px; " +
+          "line-height: 26px; text-align: left; background-color: #f8f8f8\">" + decorated_text + "</div>";
         this.click_check();
       },
 
@@ -404,7 +429,7 @@
           url_data.append('entity_list', JSON.stringify(this.edit_entity_list));
           this.$axios.put('/api/update_entity_list', url_data).then(response => {
             this.tableData[this.edit_table_pos]['version']++;
-            this.tableData[this.edit_table_pos]['entity_list'] = this.edit_entity_list;
+            this.tableData[this.edit_table_pos]['entity_list'] = JSON.stringify(this.edit_entity_list);
             this.$notify({
               title: 'Success',
               message: 'Entity submitted successfully',
@@ -435,8 +460,9 @@
         return !result ? 0 : result.length
       },
 
-      selectText(){
+      selectText(elementID){
         try{
+          let element_id_int = parseInt(elementID.charAt(elementID.length-1));
           let selected=window.getSelection().toString();
           selected = selected.trim();
           if(selected != null){
@@ -450,16 +476,16 @@
             let start_num = Math.min(window.getSelection().anchorOffset, window.getSelection().focusOffset);
             let end_num = Math.max(window.getSelection().anchorOffset, window.getSelection().focusOffset);
             //console.log(base, this.raw_text, start_num, end_num, selected)
-            if((this.raw_text || base > 0 || (!this.raw_text && base === 0))
+            if((this.raw_text[element_id_int] || base > 0 || (!this.raw_text[element_id_int] && base === 0))
               && start_num < end_num && end_num - start_num === selected.length && this.checkList.length === 1){
-              this.edit_entity_list.push({'start': base + start_num,
+              this.edit_entity_list[elementID].push({'start': base + start_num,
                 'end': base + end_num, 'word': selected, 'type': this.checkList[0]});
-              let decorated_text = this.genContent(this.edit_entity_list, this.edit_text);
-              this.display_content(decorated_text);
-              this.raw_text = false;
+              let decorated_text = this.genContent(this.edit_entity_list[elementID], this.edit_text[elementID]);
+              this.display_content(decorated_text, elementID);
+              this.raw_text[element_id_int] = false;
               this.logTable.unshift({'Event': "Mark", 'f_id': this.edit_fid,
                 'info': 'Selected: ' + selected + ', Start: ' + start_num + ', End: ' + end_num,
-                'entity_list_len': this.edit_entity_list.length});
+                'entity_list_len': this.count_entity_num()});
             }else if(base === 0 && this.checkList.length === 1){
             }else{
             }
@@ -470,24 +496,25 @@
         }
       },
 
-      deleteEntity(){
+      deleteEntity(elementID){
+        let element_id_int = parseInt(elementID.charAt(elementID.length-1));
         let spanObj=document.elementFromPoint(event.clientX, event.clientY);
         let spanClass = spanObj.getAttribute("class");
         if(this.checkList.length === 1 && spanClass === this.checkList[0]) {
           let startNum = parseInt(spanObj.getAttribute("data-startNum"));
           let endNum = parseInt(spanObj.getAttribute("data-endNum"));
-          let cur_content = this.edit_text;
-          for(let i = this.edit_entity_list.length-1; i >= 0; i--){
-            if(this.edit_entity_list[i]['start'] === startNum && this.edit_entity_list[i]['end'] === endNum){
-              this.edit_entity_list.splice(i,1);
+          let cur_content = this.edit_text[elementID];
+          for(let i = this.edit_entity_list[elementID].length-1; i >= 0; i--){
+            if(this.edit_entity_list[elementID][i]['start'] === startNum && this.edit_entity_list[elementID][i]['end'] === endNum){
+              this.edit_entity_list[elementID].splice(i,1);
             }
           }
-          if(this.edit_entity_list.length === 0){this.raw_text = true;}
-          let decorated_text = this.genContent(this.edit_entity_list, cur_content);
-          this.display_content(decorated_text);
+          if(this.edit_entity_list[elementID].length === 0){this.raw_text[element_id_int] = true;}
+          let decorated_text = this.genContent(this.edit_entity_list[elementID], cur_content);
+          this.display_content(decorated_text, elementID);
           this.logTable.unshift({'Event': "Unmark", 'f_id': this.edit_fid,
             'info': 'Class: ' + spanClass + ', Start: ' + startNum + ', End: ' + endNum,
-            'entity_list_len': this.edit_entity_list.length});
+            'entity_list_len': this.count_entity_num()});
         }
       },
 
