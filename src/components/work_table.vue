@@ -438,7 +438,7 @@
             this.logTable.unshift({'Event': "Save", 'f_id': this.edit_fid, 'info': 'Save to database successfully',
               'entity_list_len': this.edit_entity_list.length});
 
-            let wsInfo = {'message': {'p_id': this.p_id, 'f_id': this.edit_fid, 'entity_list': this.edit_entity_list,
+            let wsInfo = {'message': {'p_id': this.p_id, 'f_id': this.edit_fid, 'entity_list': JSON.stringify(this.edit_entity_list),
                 'version': this.tableData[this.edit_table_pos]['version'], 'pos': this.edit_table_pos}, 'subject': 'save'}
             this.sendMessage(JSON.stringify(wsInfo));
           }).catch(err => {
