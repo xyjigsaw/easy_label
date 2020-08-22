@@ -4,7 +4,7 @@
 
 > A Vue.js project (front-end interface) for marking entities in texts(especially pdf paper).
 
-> A Python project (back-end API) for support Vue data exchange.
+> A Python project (back-end API) to support Vue data exchange.
 
 > Front-end and Back-end are both independent.
 
