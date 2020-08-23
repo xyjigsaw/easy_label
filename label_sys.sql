@@ -11,7 +11,7 @@
  Target Server Version : 80019
  File Encoding         : 65001
 
- Date: 27/07/2020 18:03:21
+ Date: 23/08/2020 09:48:00
 */
 
 SET NAMES utf8mb4;
@@ -28,7 +28,7 @@ CREATE TABLE `entity_class` (
   `description` varchar(255) DEFAULT NULL,
   `p_id` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`c_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=57 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ----------------------------
 -- Table structure for file
@@ -40,11 +40,11 @@ CREATE TABLE `file` (
   `file_path` varchar(255) DEFAULT NULL,
   `version` int unsigned NOT NULL,
   `entity_list` json DEFAULT NULL,
-  `text` longtext,
+  `text` json DEFAULT NULL,
   `p_id` varchar(255) DEFAULT NULL,
   `is_edit` int NOT NULL,
   PRIMARY KEY (`f_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=62 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=162 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ----------------------------
 -- Table structure for project
