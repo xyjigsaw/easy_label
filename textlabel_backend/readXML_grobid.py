@@ -38,8 +38,8 @@ class PaperXMLGrobid:
         try:
             raw_xml = \
                 self.data.getElementsByTagName('text')[0].getElementsByTagName('body')[0].getElementsByTagName('div')[0].getElementsByTagName('head')[0]
-
-            if raw_xml.childNodes[0].nodeValue.lower() == 'introduction':
+            item_head = raw_xml.childNodes[0].nodeValue.lower()
+            if 'introduction' in item_head:
                 introduction_xml = \
                     self.data.getElementsByTagName('text')[0].getElementsByTagName('body')[0].getElementsByTagName('div')[0].getElementsByTagName('p')
                 return self.parse_p(introduction_xml)
@@ -54,7 +54,7 @@ class PaperXMLGrobid:
 
             for item in raw_xml:
                 item_head = item.getElementsByTagName('head')[0].childNodes[0].nodeValue.lower()
-                if item_head == 'conclusion':
+                if 'conclusion' in item_head:
                     return self.parse_p(item.getElementsByTagName('p'))
 
             return ''

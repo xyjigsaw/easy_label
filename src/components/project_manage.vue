@@ -17,6 +17,7 @@
         action="/api/file_upload"
         :limit=1
         :file-list="fileList"
+        :on-change="autoAddProjectName"
         :on-success="handleSuccess"
         :on-error="handleError"
         :auto-upload="false"
@@ -142,6 +143,12 @@
         });
       },
 
+      autoAddProjectName(file, fileList){
+        if(this.addProjectName.trim() === ''){
+          this.addProjectName = String(fileList[0].name.slice(0, -4));
+        }
+      },
+
       addProject(){
         this.addProjectName = this.addProjectName.trim();
         this.addProjectName = this.addProjectName.replace(/\s+/g, '_')
@@ -180,6 +187,7 @@
             });
             this.loading = false;
             this.fileList = [];
+            this.addProjectName = '';
             this.fetch_project();
           }else{
             this.$notify.error({title: 'Error', message: response.data['message']});
