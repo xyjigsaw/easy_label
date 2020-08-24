@@ -38,6 +38,7 @@ Before building setup
 
 - Change ws_port and pdf_port in [src/router/index.js](src/router/index.js)
 - Change NER-API proxy port and Vue project host:port in [config/index.js](config/index.js)
+- (Only for building) Replace all axios based api with full api router
 
 ``` bash
 # install dependencies

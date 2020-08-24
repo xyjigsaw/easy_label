@@ -6,7 +6,8 @@
 # *_*coding:utf-8 *_*
 
 import uvicorn
-from fastapi import FastAPI, Query, Form, APIRouter, File, UploadFile
+import traceback
+from fastapi import FastAPI, Query, Form, APIRouter, File, UploadFile, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import FileResponse
 import threading
@@ -290,6 +291,16 @@ async def unzip_more(
     except Exception as e:
         print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Unzip Add Error')
         return {"message": str(e), 'time': time.time() - start}
+
+
+async def catch_exceptions_middleware(request: Request, call_next):
+  try:
+    return await call_next(request)
+  except Exception:
+    # print(e)
+    # print("".join(traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)))
+    traceback.print_exc()
+    return Response("Internal server error", status_code=500)
 
 
 app.include_router(router)
