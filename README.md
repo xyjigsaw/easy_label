@@ -13,7 +13,7 @@
 - Add new entity class
 - Mark entities in texts
 - Support multi-user collaboration
-- Read the database asynchronously
+- Commit to the database asynchronously
 
 
 ## Preview
@@ -36,9 +36,9 @@ User should import [structure](label_sys.sql) to MySQL.
 ## Build Setup For Front-end
 Before building setup
 
-- Change ws_port and pdf_port in [src/router/index.js](src/router/index.js)
-- Change NER-API proxy port and Vue project host:port in [config/index.js](config/index.js)
-- (Only for building) Replace all axios based api with full api router
+- (npm run dev) Change ws_port and pdf_port in [src/router/index.js](src/router/index.js)
+- (npm run dev) Change NER-API proxy port and Vue project host:port in [config/index.js](config/index.js)
+- (npm run build) Replace all axios based api with full api router (e.g. /api/fetch_class->https://xxx.yy/api/fetch_class)
 
 ``` bash
 # install dependencies
