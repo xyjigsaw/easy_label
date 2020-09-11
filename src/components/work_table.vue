@@ -24,6 +24,17 @@
             <el-button type="success" icon="el-icon-check" circle @click="save"></el-button>
             <p style="font-size: 8px; color: #67C23A; text-align: center; margin: 0;">Save</p>
           </div></el-col>
+          <el-col :span="5"><div class="grid-content bg-purple">
+            <el-switch
+              style="display: block; margin-top: 10px;"
+              v-model="markMode"
+              active-color="#13ce66"
+              inactive-color="#409EFF"
+              active-text="Entity"
+              inactive-text="Relation">
+            </el-switch>
+          </div></el-col>
+
         </el-row>
 
         <div id="class_ls">
@@ -169,6 +180,8 @@
         edit_entity_list: [],
         edit_table_pos: null,
         raw_text: [],
+
+        markMode: true,
 
         logVis: false,
         logDirection: 'btt',

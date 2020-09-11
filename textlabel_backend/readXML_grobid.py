@@ -54,7 +54,7 @@ class PaperXMLGrobid:
 
             for item in raw_xml:
                 item_head = item.getElementsByTagName('head')[0].childNodes[0].nodeValue.lower()
-                if 'conclusion' in item_head:
+                if 'conclusion' in item_head or 'conclusions' in item_head:
                     return self.parse_p(item.getElementsByTagName('p'))
 
             return ''
