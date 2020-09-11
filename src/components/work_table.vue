@@ -24,6 +24,7 @@
             <el-button type="success" icon="el-icon-check" circle @click="save"></el-button>
             <p style="font-size: 8px; color: #67C23A; text-align: center; margin: 0;">Save</p>
           </div></el-col>
+          <!--
           <el-col :span="5"><div class="grid-content bg-purple">
             <el-switch
               style="display: block; margin-top: 10px;"
@@ -31,10 +32,11 @@
               active-color="#13ce66"
               inactive-color="#409EFF"
               active-text="Entity"
-              inactive-text="Relation">
+              inactive-text="Relation"
+              @change="see_all">
             </el-switch>
           </div></el-col>
-
+          -->
         </el-row>
 
         <div id="class_ls">
@@ -46,11 +48,11 @@
           <el-button v-if="edit_fid" type="text">{{ tableData[edit_table_pos]['file_name'] }}</el-button>
           <div id="text_detail_group">
             <el-button v-if="edit_fid" type="text">Abstract</el-button>
-            <div id="text_detail_0" @mouseup="selectText('text_detail_0')" @click="deleteEntity('text_detail_0')"></div>
+            <div id="text_detail_0" @mouseup="selectText('text_detail_0')" @click="clickEntity('text_detail_0')"></div>
             <el-button v-if="edit_fid" type="text">Introduction</el-button>
-            <div id="text_detail_1" @mouseup="selectText('text_detail_1')" @click="deleteEntity('text_detail_1')"></div>
+            <div id="text_detail_1" @mouseup="selectText('text_detail_1')" @click="clickEntity('text_detail_1')"></div>
             <el-button v-if="edit_fid" type="text">Conclusion</el-button>
-            <div id="text_detail_2" @mouseup="selectText('text_detail_2')" @click="deleteEntity('text_detail_2')"></div>
+            <div id="text_detail_2" @mouseup="selectText('text_detail_2')" @click="clickEntity('text_detail_2')"></div>
           </div>
         </div>
 
@@ -150,6 +152,7 @@
 <script>
   import Vue from 'vue'
   import pdf from 'vue-pdf';
+  import jsPlumb from "jsplumb";
   export default {
     components:{
       pdf
@@ -182,6 +185,11 @@
         raw_text: [],
 
         markMode: true,
+
+        autoMarkSelection: true,
+
+        autoHint: true,
+        hintList: [{'start': 100, 'end': 103, 'word': 'The', 'type': 'auto-hint'}, {'start': 51, 'end': 60, 'word': 'The', 'type': 'auto-hint'}],
 
         logVis: false,
         logDirection: 'btt',
@@ -379,25 +387,38 @@
       },
 
       genContent(entity_str_ls, cur_content){
+        if(this.autoHint) {
+          entity_str_ls = entity_str_ls.concat(this.getHint());
+        }
         entity_str_ls.sort(this.sort_entity);
         let split_ls = [];
         for(let j = 0; j < entity_str_ls.length; j++){
           let start_str = entity_str_ls[j]['start'];
           let end_str = entity_str_ls[j]['end'];
           let type_str = entity_str_ls[j]['type'];
-          split_ls.push([type_str, parseInt(start_str), parseInt(end_str)]);
+          let word_str = entity_str_ls[j]['word'];
+          split_ls.push([type_str, parseInt(start_str), parseInt(end_str), word_str]);
         }
         for(let j = split_ls.length - 1; j >= 0; j--){
-          let [type, startNum, endNum] = split_ls[j];
+          let [type, startNum, endNum, word] = split_ls[j];
           for(let k = 0; k < this.classNameList.length; k++){
-            if(type===this.classNameList[k]){
+            if(type === this.classNameList[k]){
               cur_content = cur_content.substring(0, startNum) + '<span class="' + type + '" style="color:' + this.classColorList[k]+
-                '; font-weight: bold;  cursor: pointer;" data-startNum="' + startNum + '" data-endNum="' + endNum + '">'
+                '; font-weight: bold;  cursor: pointer;" data-startNum="' + startNum + '" data-endNum="' + endNum + '" data-word="' + word + '">'
                 + cur_content.substring(startNum, endNum) + '</span>' + cur_content.substring(endNum)
             }
           }
+          if(type === 'auto-hint'){
+            cur_content = cur_content.substring(0, startNum) + '<span class="auto-hint" style="cursor:' + 'pointer'+
+              '; border-bottom:2px solid #898989; " data-startNum="' + startNum + '" data-endNum="' + endNum + '" data-word="' + word + '">'
+              + cur_content.substring(startNum, endNum) + '</span>' + cur_content.substring(endNum)
+          }
         }
         return cur_content;
+      },
+
+      getHint(){
+        return this.hintList;
       },
 
       see_all(){
@@ -475,59 +496,109 @@
 
       selectText(elementID){
         try{
-          let element_id_int = parseInt(elementID.charAt(elementID.length-1));
-          let selected=window.getSelection().toString();
-          selected = selected.trim();
-          if(selected != null){
-            let range = window.getSelection().getRangeAt(0);
-            let base = 0;
-            let preElement = range.startContainer;
-            while(preElement.previousSibling){
-              base += preElement.previousSibling.textContent.length;
-              preElement = preElement.previousSibling;
-            }
-            let start_num = Math.min(window.getSelection().anchorOffset, window.getSelection().focusOffset);
-            let end_num = Math.max(window.getSelection().anchorOffset, window.getSelection().focusOffset);
-            //console.log(base, this.raw_text, start_num, end_num, selected)
-            if((this.raw_text[element_id_int] || base > 0 || (!this.raw_text[element_id_int] && base === 0))
-              && start_num < end_num && end_num - start_num === selected.length && this.checkList.length === 1){
-              this.edit_entity_list[elementID].push({'start': base + start_num,
-                'end': base + end_num, 'word': selected, 'type': this.checkList[0]});
-              let decorated_text = this.genContent(this.edit_entity_list[elementID], this.edit_text[elementID]);
-              this.display_content(decorated_text, elementID);
-              this.raw_text[element_id_int] = false;
-              this.logTable.unshift({'Event': "Mark", 'f_id': this.edit_fid,
-                'info': 'Selected: ' + selected + ', Start: ' + start_num + ', End: ' + end_num,
-                'entity_list_len': this.count_entity_num()});
-            }else if(base === 0 && this.checkList.length === 1){
+          if(this.markMode === true){
+            let element_id_int = parseInt(elementID.charAt(elementID.length-1));
+            let selected=window.getSelection().toString();
+            selected = selected.trim();
+            if(selected != null){
+              let range = window.getSelection().getRangeAt(0);
+              let base = 0;
+              let preElement = range.startContainer;
+              while(preElement.previousSibling){
+                base += preElement.previousSibling.textContent.length;
+                preElement = preElement.previousSibling;
+              }
+              let start_num = Math.min(window.getSelection().anchorOffset, window.getSelection().focusOffset);
+              let end_num = Math.max(window.getSelection().anchorOffset, window.getSelection().focusOffset);
+              //console.log(base, this.raw_text, start_num, end_num, selected)
+              if((this.raw_text[element_id_int] || base > 0 || (!this.raw_text[element_id_int] && base === 0))
+                && start_num < end_num && end_num - start_num === selected.length && this.checkList.length === 1){
+
+                if(this.autoMarkSelection){
+                  let marginChar = [',', '.', ':', ';', '?', '!', ' ', '(', ')', '>', '<', '"', '*', '%', '-', '_']
+                  let selectedPosList = [];
+                  let tmpPos = 0;
+                  while(tmpPos > -1){
+                    tmpPos = this.edit_text[elementID].indexOf(selected, tmpPos + selected.length);
+                    selectedPosList.push(tmpPos);
+                  }
+                  let allStartNum = [];
+                  for(let i = 0; i < this.edit_entity_list[elementID].length; i++){
+                    allStartNum.push(this.edit_entity_list[elementID][i]['start'])
+                  }
+                  for(let i = 0; i < selectedPosList.length - 1; i++){
+                    if(allStartNum.indexOf(selectedPosList[i]) === -1){
+                      if(marginChar.indexOf(this.edit_text[elementID][selectedPosList[i] - 1]) > -1 && marginChar.indexOf(this.edit_text[elementID][selectedPosList[i] + selected.length]) > -1){
+                        this.edit_entity_list[elementID].push({'start': selectedPosList[i],
+                          'end': selectedPosList[i] + selected.length, 'word': selected, 'type': this.checkList[0]});
+                      }
+                    }
+                  }
+                }else{
+                  this.edit_entity_list[elementID].push({'start': base + start_num,
+                    'end': base + end_num, 'word': selected, 'type': this.checkList[0]});
+                }
+
+                let decorated_text = this.genContent(this.edit_entity_list[elementID], this.edit_text[elementID]);
+                this.display_content(decorated_text, elementID);
+                this.raw_text[element_id_int] = false;
+                this.logTable.unshift({'Event': "Mark", 'f_id': this.edit_fid,
+                  'info': 'Selected: ' + selected + ', Start: ' + start_num + ', End: ' + end_num,
+                  'entity_list_len': this.count_entity_num()});
+              }else if(base === 0 && this.checkList.length === 1){
+              }else{
+              }
             }else{
             }
-          }else{
+          }else{//relation mode
+            let spanObj=document.elementFromPoint(event.clientX, event.clientY);
+            console.log(spanObj);
           }
+
         }catch(err){
           this.$message.error(err);
         }
       },
 
-      deleteEntity(elementID){
-        let element_id_int = parseInt(elementID.charAt(elementID.length-1));
-        let spanObj=document.elementFromPoint(event.clientX, event.clientY);
-        let spanClass = spanObj.getAttribute("class");
-        if(this.checkList.length === 1 && spanClass === this.checkList[0]) {
-          let startNum = parseInt(spanObj.getAttribute("data-startNum"));
-          let endNum = parseInt(spanObj.getAttribute("data-endNum"));
-          let cur_content = this.edit_text[elementID];
-          for(let i = this.edit_entity_list[elementID].length-1; i >= 0; i--){
-            if(this.edit_entity_list[elementID][i]['start'] === startNum && this.edit_entity_list[elementID][i]['end'] === endNum){
-              this.edit_entity_list[elementID].splice(i,1);
+      clickEntity(elementID){
+        if(this.markMode === true){
+          let element_id_int = parseInt(elementID.charAt(elementID.length-1));
+          let spanObj=document.elementFromPoint(event.clientX, event.clientY);
+          let spanClass = spanObj.getAttribute("class");
+          if(this.checkList.length === 1 && spanClass === this.checkList[0]) {
+            let startNum = parseInt(spanObj.getAttribute("data-startNum"));
+            let endNum = parseInt(spanObj.getAttribute("data-endNum"));
+            let cur_content = this.edit_text[elementID];
+            for(let i = this.edit_entity_list[elementID].length-1; i >= 0; i--){
+              if(this.edit_entity_list[elementID][i]['start'] === startNum && this.edit_entity_list[elementID][i]['end'] === endNum){
+                this.edit_entity_list[elementID].splice(i,1);
+              }
             }
+            if(this.edit_entity_list[elementID].length === 0){this.raw_text[element_id_int] = true;}
+            let decorated_text = this.genContent(this.edit_entity_list[elementID], cur_content);
+            this.display_content(decorated_text, elementID);
+            this.logTable.unshift({'Event': "Unmark", 'f_id': this.edit_fid,
+              'info': 'Class: ' + spanClass + ', Start: ' + startNum + ', End: ' + endNum,
+              'entity_list_len': this.count_entity_num()});
+          }else if(this.checkList.length === 1 && spanClass === 'auto-hint'){//auto-hint
+            let startNum = parseInt(spanObj.getAttribute("data-startNum"));
+            let endNum = parseInt(spanObj.getAttribute("data-endNum"));
+            let word = parseInt(spanObj.getAttribute("data-word"));
+            let cur_content = this.edit_text[elementID];
+            for(let i = this.hintList.length-1; i >= 0; i--){
+              if(this.hintList[i]['start'] === startNum && this.hintList[i]['end'] === endNum){
+                this.hintList.splice(i,1);
+              }
+            }
+            this.edit_entity_list[elementID].push({'start': startNum,
+              'end': endNum, 'word': word, 'type': this.checkList[0]});
+            let decorated_text = this.genContent(this.edit_entity_list[elementID], cur_content);
+            this.display_content(decorated_text, elementID);
+            this.raw_text[element_id_int] = false;
+            this.logTable.unshift({'Event': "Mark", 'f_id': this.edit_fid,
+              'info': 'Selected: ' + word + ', Start: ' + startNum + ', End: ' + endNum,
+              'entity_list_len': this.count_entity_num()});
           }
-          if(this.edit_entity_list[elementID].length === 0){this.raw_text[element_id_int] = true;}
-          let decorated_text = this.genContent(this.edit_entity_list[elementID], cur_content);
-          this.display_content(decorated_text, elementID);
-          this.logTable.unshift({'Event': "Unmark", 'f_id': this.edit_fid,
-            'info': 'Class: ' + spanClass + ', Start: ' + startNum + ', End: ' + endNum,
-            'entity_list_len': this.count_entity_num()});
         }
       },
 
@@ -611,6 +682,29 @@
 
     created() {
       this.init_page();
+      let arr = [];
+      let that = this;
+      document.onkeydown = function(e) {
+        if(arr.length > 0) { // a-z按键长按去重
+          if(arr.indexOf(e.key.toLowerCase()) >= 0) {
+            return
+          }
+        }
+        arr.push(e.key.toLowerCase())
+        this.keydown = arr.join('+');
+        if(this.keydown === 'shift+s') {
+          this.keydown = '';
+          that.save();
+        }else if(this.keydown === 'shift+p'){
+          this.keydown = '';
+          that.see_all();
+        }
+      }
+      document.onkeyup = function (e) {
+        arr.splice(arr.indexOf( e.key.toLowerCase() ),1);
+        this.keydown = arr.join('+');
+      }
+      this.keydown = '';
     },
 
     beforeDestroy() {

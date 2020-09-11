@@ -80,6 +80,7 @@ npm install -g vue-cli
 vue init webpack text_label
 
 npm install axios -S
-npm i element-ui -S
+npm install element-ui -S
+npm install jsplumb -S
 # npm install goeasy -S not used
 ```
