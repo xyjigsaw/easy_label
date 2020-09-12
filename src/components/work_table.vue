@@ -406,22 +406,35 @@
             if(type === this.classNameList[k]){
               cur_content = cur_content.substring(0, startNum) + '<span class="' + type + '" style="color:' + this.classColorList[k]+
                 '; font-weight: bold;  cursor: pointer;" data-startNum="' + startNum + '" data-endNum="' + endNum + '" data-word="' + word + '">'
-                + cur_content.substring(startNum, endNum) + '</span>' + cur_content.substring(endNum)
+                + cur_content.substring(startNum, endNum) + '</span>' + cur_content.substring(endNum);
             }
           }
           if(type === 'auto-hint'){
             cur_content = cur_content.substring(0, startNum) + '<span class="auto-hint" style="cursor:' + 'pointer'+
               '; border-bottom:2px solid #898989; " data-startNum="' + startNum + '" data-endNum="' + endNum + '" data-word="' + word + '">'
-              + cur_content.substring(startNum, endNum) + '</span>' + cur_content.substring(endNum)
+              + cur_content.substring(startNum, endNum) + '</span>' + cur_content.substring(endNum);
           }
         }
         return cur_content;
       },
 
       getHint(elementID){
-        this.hintList = {"text_detail_0": [], "text_detail_1": [], "text_detail_2": []};
-        //this.hintList = {"text_detail_0": [{"end": 371, "type": "auto-hint", "word": "unified", "start": 364}], "text_detail_1": [{"end": 46, "type": "auto-hint", "word": "alignment", "start": 37}], "text_detail_2": []}
+        //this.hintList = {"text_detail_0": [], "text_detail_1": [], "text_detail_2": []};
+        this.hintList = {"text_detail_0": [{"end": 371, "type": "auto-hint", "word": "unified", "start": 364}], "text_detail_1": [{"end": 46, "type": "auto-hint", "word": "alignment", "start": 37}], "text_detail_2": []}
+        this.removeRedundantHint(elementID);
         return this.hintList[elementID];
+      },
+
+      removeRedundantHint(elementID){
+        for(let i = this.hintList[elementID].length-1; i >= 0; i--){
+          for(let j = 0; j < this.edit_entity_list[elementID].length; j++){
+            if(this.hintList[elementID][i]['start'] === this.edit_entity_list[elementID][j]['start'] ||
+              this.hintList[elementID][i]['end'] === this.edit_entity_list[elementID][j]['end']){
+              this.hintList[elementID].splice(i,1);
+              break;
+            }
+          }
+        }
       },
 
       see_all(){
@@ -518,7 +531,7 @@
                 && start_num < end_num && end_num - start_num === selected.length && this.checkList.length === 1){
 
                 if(this.autoMarkSelection){
-                  let marginChar = [',', '.', ':', ';', '?', '!', ' ', '(', ')', '>', '<', '"', '*', '%', '-', '_']
+                  let marginChar = [',', '.', ':', ';', '?', '!', ' ', '(', ')', '>', '<', '"', '*', '%', '-', '_', '\n']
                   let selectedPosList = [];
                   let tmpPos = 0;
                   while(tmpPos > -1){
@@ -588,11 +601,12 @@
             let endNum = parseInt(spanObj.getAttribute("data-endNum"));
             let word = spanObj.getAttribute("data-word");
             let cur_content = this.edit_text[elementID];
-            for(let i = this.hintList.length-1; i >= 0; i--){
-              if(this.hintList[i]['start'] === startNum && this.hintList[i]['end'] === endNum){
-                this.hintList.splice(i,1);
-              }
-            }
+            //for(let i = this.hintList.length-1; i >= 0; i--){
+            //  if(this.hintList[i]['start'] === startNum && this.hintList[i]['end'] === endNum){
+            //    this.hintList.splice(i,1);
+            //  }
+            //}
+            this.removeRedundantHint(elementID);
             this.edit_entity_list[elementID].push({'start': startNum,
               'end': endNum, 'word': word, 'type': this.checkList[0]});
             let decorated_text = this.genContent(this.edit_entity_list[elementID], cur_content);
