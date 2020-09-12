@@ -23,7 +23,7 @@ export default new Router({
         {path: 'class_manage', name: 'class_manage', component: class_manage},
         {path: 'project_manage', name: 'project_manage', component: project_manage},
         {path: 'work_table', name: 'work_table', component: work_table, meta:
-            {ws_port: 'ws://10.10.2.19:8000/ws', pdf_port: 'http://10.10.2.19:8000/get_file/'}},
+            {ws_port: 'ws://10.10.2.89:8000/ws', pdf_port: 'http://10.10.2.89:8000/get_file/'}},
       ]
     },
   ]

@@ -121,6 +121,7 @@ async def update_entity_list(
                                 example='[{"end": 366, "type": "Research", "word": "entities", "start": 358}]')
 ):
     start = time.time()
+    print(entity_list)
     entity_list = eval(entity_list)
     info = await async_db.update_entity_list(f_id, entity_list)
     print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Submit Entity_list Success')

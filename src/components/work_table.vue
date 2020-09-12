@@ -189,7 +189,7 @@
         autoMarkSelection: true,
 
         autoHint: true,
-        hintList: [{'start': 100, 'end': 103, 'word': 'The', 'type': 'auto-hint'}, {'start': 51, 'end': 60, 'word': 'The', 'type': 'auto-hint'}],
+        hintList: [],
 
         logVis: false,
         logDirection: 'btt',
@@ -334,7 +334,11 @@
         this.change_status(this.edit_table_pos, 1, true);
         for(let elementID in this.edit_entity_list){
           if(this.edit_entity_list.hasOwnProperty(elementID)){
-            let decorated_text = this.genContent(this.edit_entity_list[elementID], this.edit_text[elementID]);
+            let tmp_entity_str_ls = this.edit_entity_list[elementID];
+            if(this.autoHint) {
+              tmp_entity_str_ls = tmp_entity_str_ls.concat(this.getHint(elementID));
+            }
+            let decorated_text = this.genContent(tmp_entity_str_ls, this.edit_text[elementID]);
             this.display_content(decorated_text, elementID);
           }
         }
@@ -387,9 +391,6 @@
       },
 
       genContent(entity_str_ls, cur_content){
-        if(this.autoHint) {
-          entity_str_ls = entity_str_ls.concat(this.getHint());
-        }
         entity_str_ls.sort(this.sort_entity);
         let split_ls = [];
         for(let j = 0; j < entity_str_ls.length; j++){
@@ -417,8 +418,10 @@
         return cur_content;
       },
 
-      getHint(){
-        return this.hintList;
+      getHint(elementID){
+        this.hintList = {"text_detail_0": [], "text_detail_1": [], "text_detail_2": []};
+        //this.hintList = {"text_detail_0": [{"end": 371, "type": "auto-hint", "word": "unified", "start": 364}], "text_detail_1": [{"end": 46, "type": "auto-hint", "word": "alignment", "start": 37}], "text_detail_2": []}
+        return this.hintList[elementID];
       },
 
       see_all(){
@@ -583,7 +586,7 @@
           }else if(this.checkList.length === 1 && spanClass === 'auto-hint'){//auto-hint
             let startNum = parseInt(spanObj.getAttribute("data-startNum"));
             let endNum = parseInt(spanObj.getAttribute("data-endNum"));
-            let word = parseInt(spanObj.getAttribute("data-word"));
+            let word = spanObj.getAttribute("data-word");
             let cur_content = this.edit_text[elementID];
             for(let i = this.hintList.length-1; i >= 0; i--){
               if(this.hintList[i]['start'] === startNum && this.hintList[i]['end'] === endNum){
