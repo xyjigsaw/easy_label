@@ -11,7 +11,11 @@
           <i class="el-icon-folder-opened"></i>
           <span slot="title">Project</span>
         </el-menu-item>
-        <el-menu-item index="2" @click="isCollapse = !isCollapse">
+        <el-menu-item index="2" @click="navHelp">
+          <i class="el-icon-question"></i>
+          <span slot="title">Help</span>
+        </el-menu-item>
+        <el-menu-item index="3" @click="isCollapse = !isCollapse">
           <i class="el-icon-caret-right" v-if="isCollapse"></i>
           <span slot="title" v-if="isCollapse">Unfold</span>
           <i class="el-icon-caret-left" v-if="!isCollapse"></i>
@@ -43,6 +47,9 @@
       },
       navProject(){
         this.$router.push("/home/project_manage");
+      },
+      navHelp(){
+        this.$router.push("/home/help");
       }
     }
   };
