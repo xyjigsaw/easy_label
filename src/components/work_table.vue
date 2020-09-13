@@ -24,19 +24,25 @@
             <el-button type="success" icon="el-icon-check" circle @click="save"></el-button>
             <p style="font-size: 8px; color: #67C23A; text-align: center; margin: 0;">Save</p>
           </div></el-col>
-          <!--
+
           <el-col :span="5"><div class="grid-content bg-purple">
             <el-switch
-              style="display: block; margin-top: 10px;"
-              v-model="markMode"
+              style="display: block; margin-top: 1px;"
+              v-model="autoHint"
               active-color="#13ce66"
-              inactive-color="#409EFF"
-              active-text="Entity"
-              inactive-text="Relation"
-              @change="see_all">
+              inactive-color="#dddddd"
+              active-text="AUTO HINT"
+              @change="autoHintMSG">
+            </el-switch>
+            <el-switch
+              style="display: block; margin-top: 5px; margin-left: 10px;"
+              v-model="autoMarkSelection"
+              active-color="#13ce66"
+              inactive-color="#dddddd"
+              active-text="AUTO MARK">
             </el-switch>
           </div></el-col>
-          -->
+
         </el-row>
 
         <div id="class_ls">
@@ -420,9 +426,24 @@
 
       getHint(elementID){
         //this.hintList = {"text_detail_0": [], "text_detail_1": [], "text_detail_2": []};
+        let url_data={
+          text_detail: JSON.stringify(this.edit_text)
+        };
+        //this.$axios.get('/api/fetch_hint', {params: url_data}).then(response => {
+        //  this.hintList = response.data['data'];
+        //}).catch(err => {
+        //  this.$notify.error({title: 'Error', message: err});
+        //});
         this.hintList = {"text_detail_0": [{"end": 371, "type": "auto-hint", "word": "unified", "start": 364}], "text_detail_1": [{"end": 46, "type": "auto-hint", "word": "alignment", "start": 37}], "text_detail_2": []}
         this.removeRedundantHint(elementID);
         return this.hintList[elementID];
+      },
+
+      autoHintMSG(){
+        this.$notify.info({
+          title: 'Message',
+          message: 'Changes will take effect after re entering the edit page.'
+        });
       },
 
       removeRedundantHint(elementID){
@@ -601,11 +622,6 @@
             let endNum = parseInt(spanObj.getAttribute("data-endNum"));
             let word = spanObj.getAttribute("data-word");
             let cur_content = this.edit_text[elementID];
-            //for(let i = this.hintList.length-1; i >= 0; i--){
-            //  if(this.hintList[i]['start'] === startNum && this.hintList[i]['end'] === endNum){
-            //    this.hintList.splice(i,1);
-            //  }
-            //}
             this.removeRedundantHint(elementID);
             this.edit_entity_list[elementID].push({'start': startNum,
               'end': endNum, 'word': word, 'type': this.checkList[0]});

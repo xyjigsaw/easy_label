@@ -139,6 +139,18 @@ async def change_status(
     return {'time': time.time() - start}
 
 
+@router.get('/fetch_hint', response_model=GetResponse)
+async def fetch_hint(
+        text_detail: str = Query(..., description='text detail', example='{[]}'),
+):
+    start = time.time()
+    print(text_detail)
+    api_data = {"text_detail_0": [{"end": 371, "type": "auto-hint", "word": "unified", "start": 364}], "text_detail_1": [{"end": 46, "type": "auto-hint", "word": "alignment", "start": 37}], "text_detail_2": []}
+    # api_data = [{"end": 371, "type": "auto-hint", "word": "unified", "start": 364}]
+    print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Fetch Hint Success')
+    return {'time': time.time() - start, 'data': api_data}
+
+
 #############################################
 # Upload
 #############################################
