@@ -14,6 +14,8 @@
 - Mark entities in texts
 - Support multi-user collaboration
 - Commit to the database asynchronously
+- Recognize potential entities
+- recognize and mark all identical entities after selection
 
 
 ## Preview
