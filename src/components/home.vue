@@ -50,6 +50,9 @@
       },
       navHelp(){
         this.$router.push("/home/help");
+      },
+      navResearcher(){
+        this.$router.push("http://10.10.10.1:8083/#/research");
       }
     }
   };

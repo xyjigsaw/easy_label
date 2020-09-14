@@ -277,11 +277,12 @@
       gen_labels(template_str, elementID){
         let that = this;
         let classLabel = Vue.extend({
-          template: '<el-checkbox-group v-model="checkList" @change="click_check" :max="check_max" ' +
-            'style="background-color: #FFFFFF; box-shadow: 0 0 5px #dddddd; padding: 8px;margin: 0 5px;">' + template_str +
-            '</el-checkbox-group>',
+          template: '<el-checkbox-group class="labelGroup" v-model="checkList" @change="click_check" :max="check_max" ' +
+            'style="background-color: #FFFFFF; box-shadow: 0 0 5px #dddddd; padding: 8px;margin: 0 5px; position: static;">' + template_str +
+            '<el-switch style="padding:10px;" v-model="pos_fixed" active-color="#13ce66" inactive-color="#DCDFE6" active-text="fixed" @change="change_pos"></el-switch></el-checkbox-group>',
           data: function () {
             return {
+              pos_fixed: true,
               checkList: that.checkList,
               check_max: that.check_max,
             };
@@ -291,7 +292,17 @@
               that.checkList = this.checkList;
               that.check_max = this.check_max;
               that.click_check();
-            }
+            },
+
+            change_pos(){
+              let obj = document.getElementsByClassName("labelGroup");
+              if(obj.item(0).style.position === 'fixed'){
+                obj.item(0).style.position='static';
+              }else if(obj.item(0).style.position === 'static'){
+                obj.item(0).style.position='fixed';
+              }
+
+            },
           }
         });
 
@@ -417,7 +428,7 @@
           }
           if(type === 'auto-hint'){
             cur_content = cur_content.substring(0, startNum) + '<span class="auto-hint" style="cursor:' + 'pointer'+
-              '; border-bottom:2px solid #898989; " data-startNum="' + startNum + '" data-endNum="' + endNum + '" data-word="' + word + '">'
+              '; border-bottom:2px solid #ff5858; " data-startNum="' + startNum + '" data-endNum="' + endNum + '" data-word="' + word + '">'
               + cur_content.substring(startNum, endNum) + '</span>' + cur_content.substring(endNum);
           }
         }
@@ -476,8 +487,15 @@
             type: 'warning'
           });
         }else{
-          this.$router.push({path: '/home/class_manage',
-            query: {p_id: this.$route.query.p_id, name: this.$route.query.name, path: this.$route.query.path, total: this.$route.query.total}});
+          this.$confirm('Are you sure to leave?', 'Warning', {
+            confirmButtonText: 'Yes',
+            cancelButtonText: 'Cancel',
+            type: 'warning'
+          }).then(() => {
+            this.$router.push({path: '/home/class_manage',
+              query: {p_id: this.$route.query.p_id, name: this.$route.query.name, path: this.$route.query.path, total: this.$route.query.total}});
+          }).catch(() => {
+          });
         }
       },
 
@@ -522,7 +540,14 @@
       },
 
       back2project(){
-        this.$router.push("/home/project_manage");
+        this.$confirm('Are you sure to leave?', 'Warning', {
+          confirmButtonText: 'Yes',
+          cancelButtonText: 'Cancel',
+          type: 'warning'
+        }).then(() => {
+          this.$router.push("/home/project_manage");
+        }).catch(() => {
+        });
       },
 
       count_str_len(text, str){
@@ -718,6 +743,7 @@
       let arr = [];
       let that = this;
       document.onkeydown = function(e) {
+        let digitalShift = ['!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+']
         if(arr.length > 0) { // a-z按键长按去重
           if(arr.indexOf(e.key.toLowerCase()) >= 0) {
             return
@@ -728,9 +754,29 @@
         if(this.keydown === 'shift+s') {
           this.keydown = '';
           that.save();
-        }else if(this.keydown === 'shift+p'){
+        }else if(this.keydown === 'shift+p') {
           this.keydown = '';
           that.see_all();
+        }else if(this.keydown === 'shift+q') {
+          this.keydown = '';
+          that.back2project();
+        }else if(this.keydown === 'shift+m') {
+          this.keydown = '';
+          that.autoMarkSelection = !that.autoMarkSelection;
+        }else if(this.keydown === 'shift+h'){
+          this.keydown = '';
+          that.autoHint = !that.autoHint;
+        }else if(digitalShift.indexOf(this.keydown[this.keydown.length - 1]) > -1){
+          let keyPos = digitalShift.indexOf(this.keydown[this.keydown.length - 1]);
+          this.keydown = '';
+          if(keyPos <= that.classNameList.length){
+            this.checkList = [that.classNameList[keyPos]];
+            that.labelIns.checkList = this.checkList;
+            that.labelIns.click_check();
+            this.keydown = '';
+            that.$notify({title: that.classNameList[keyPos], message: 'You have switched to class ' + that.classNameList[keyPos] + '.', type: 'success'
+            });
+          }
         }
       }
       document.onkeyup = function (e) {

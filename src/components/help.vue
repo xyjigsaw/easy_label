@@ -12,6 +12,10 @@
           <h2>Shortcuts</h2>
           <li>shift + p: preview all marked entities</li>
           <li>shift + s: save changes</li>
+          <li>shift + q: leave</li>
+          <li>shift + h: change auto hint status</li>
+          <li>shift + m: change auto mark status</li>
+          <li>shift + [1, 2, 3, 4, ...]: switch to the ith label</li>
           <h2>Features</h2>
           <li>auto hint: recognize potential entities</li>
           <li>auto mark: recognize and mark all identical entities after selection</li>
