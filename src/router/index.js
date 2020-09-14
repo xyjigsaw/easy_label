@@ -24,7 +24,7 @@ export default new Router({
         {path: 'project_manage', name: 'project_manage', component: project_manage},
         {path: 'help', name: 'help', component: help},
         {path: 'work_table', name: 'work_table', component: work_table, meta:
-            {ws_port: 'ws://10.10.2.24:8000/ws', pdf_port: 'http://10.10.2.24:8000/get_file/'}},
+            {ws_port: 'ws://10.10.2.89:8000/ws', pdf_port: 'http://10.10.2.89:8000/get_file/'}},
       ]
     },
   ]

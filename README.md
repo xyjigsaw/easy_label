@@ -17,6 +17,9 @@
 - Recognize potential entities
 - recognize and mark all identical entities after selection
 
+## Todo
+- Add relation mark function
+
 
 ## Preview
 - Project Management
@@ -61,7 +64,7 @@ For a detailed explanation on how things work, check out the [guide](http://vuej
 ## Build Setup For [Back-end](textlabel_backend)
 
 Add Vue Project Host in [origins](textlabel_backend/apiCore.py) For Security
-Configure Database in [config](textlabel_backend/db_toolkit.py)
+Configure Database in [config](textlabel_backend/async_db.py)
 
 ```bash
 # install dependencies

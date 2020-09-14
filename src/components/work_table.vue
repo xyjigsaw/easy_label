@@ -158,7 +158,7 @@
 <script>
   import Vue from 'vue'
   import pdf from 'vue-pdf';
-  import jsPlumb from "jsplumb";
+  //import jsPlumb from "jsplumb";
   export default {
     components:{
       pdf
@@ -279,7 +279,7 @@
         let classLabel = Vue.extend({
           template: '<el-checkbox-group class="labelGroup" v-model="checkList" @change="click_check" :max="check_max" ' +
             'style="background-color: #FFFFFF; box-shadow: 0 0 5px #dddddd; padding: 8px;margin: 0 5px; position: static;">' + template_str +
-            '<el-switch style="padding:10px;" v-model="pos_fixed" active-color="#13ce66" inactive-color="#DCDFE6" active-text="fixed" @change="change_pos"></el-switch></el-checkbox-group>',
+            '<el-button icon="el-icon-rank" @click="change_pos" style="padding: 10px; margin: 10px;"></el-button></el-switch></el-checkbox-group>',
           data: function () {
             return {
               pos_fixed: true,
@@ -672,6 +672,7 @@
               this.sendMessage(JSON.stringify(wsInfo));
             }
           }).catch(err => {
+            console.log(err);
           });
         }
       },
