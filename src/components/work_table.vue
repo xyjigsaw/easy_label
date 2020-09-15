@@ -193,9 +193,8 @@
         markMode: true,
 
         autoMarkSelection: true,
-
         autoHint: true,
-        hintList: [],
+        hintList: {"text_detail_0": [], "text_detail_1": [], "text_detail_2": []},
 
         logVis: false,
         logDirection: 'btt',
@@ -313,12 +312,7 @@
 
       editFile(index, info){
         if(info['is_edit'] === 1){
-          this.$notify({
-            title: 'Warning',
-            message: 'This file is being edited.',
-            duration: 4000,
-            type: 'warning'
-          });
+          this.$notify({title: 'Warning', message: 'This file is being edited.', duration: 4000, type: 'warning'});
           return;
         }
         if(this.edit_fid){
@@ -353,10 +347,23 @@
           if(this.edit_entity_list.hasOwnProperty(elementID)){
             let tmp_entity_str_ls = this.edit_entity_list[elementID];
             if(this.autoHint) {
-              tmp_entity_str_ls = tmp_entity_str_ls.concat(this.getHint(elementID));
+
+              let url_data = new FormData();
+
+              url_data.append('text_detail', this.edit_text[elementID]);
+              this.$axios.post('/api/fetch_hint', url_data).then(response => {
+                this.hintList[elementID] = response.data['data'];
+                this.removeRedundantHint(elementID);
+                tmp_entity_str_ls = tmp_entity_str_ls.concat(this.hintList[elementID]);
+                let decorated_text = this.genContent(tmp_entity_str_ls, this.edit_text[elementID]);
+                this.display_content(decorated_text, elementID);
+              }).catch(err => {
+                this.$notify.error({title: 'Error', message: err});
+              });
+            }else{
+              let decorated_text = this.genContent(tmp_entity_str_ls, this.edit_text[elementID]);
+              this.display_content(decorated_text, elementID);
             }
-            let decorated_text = this.genContent(tmp_entity_str_ls, this.edit_text[elementID]);
-            this.display_content(decorated_text, elementID);
           }
         }
         this.logTable.unshift({'Event': "Mark", 'f_id': this.edit_fid, 'info': 'Edit file to mark entity',
@@ -435,26 +442,8 @@
         return cur_content;
       },
 
-      getHint(elementID){
-        //this.hintList = {"text_detail_0": [], "text_detail_1": [], "text_detail_2": []};
-        let url_data={
-          text_detail: JSON.stringify(this.edit_text)
-        };
-        //this.$axios.get('/api/fetch_hint', {params: url_data}).then(response => {
-        //  this.hintList = response.data['data'];
-        //}).catch(err => {
-        //  this.$notify.error({title: 'Error', message: err});
-        //});
-        this.hintList = {"text_detail_0": [{"end": 371, "type": "auto-hint", "word": "unified", "start": 364}], "text_detail_1": [{"end": 46, "type": "auto-hint", "word": "alignment", "start": 37}], "text_detail_2": []}
-        this.removeRedundantHint(elementID);
-        return this.hintList[elementID];
-      },
-
       autoHintMSG(){
-        this.$notify.info({
-          title: 'Message',
-          message: 'Changes will take effect after re entering the edit page.'
-        });
+        this.$notify.info({title: 'Message', message: 'Changes will take effect after re entering the edit page.'});
       },
 
       removeRedundantHint(elementID){
@@ -481,11 +470,7 @@
 
       editClass() {
         if(this.onlineUsers > 1){
-          this.$notify({
-            title: 'Warning',
-            message: 'There are other users editing.',
-            type: 'warning'
-          });
+          this.$notify({title: 'Warning', message: 'There are other users editing.', type: 'warning'});
         }else{
           this.$confirm('Are you sure to leave?', 'Warning', {
             confirmButtonText: 'Yes',
@@ -501,11 +486,7 @@
 
       save(){
         if(this.edit_fid === null){
-          this.$notify({
-            title: 'Info',
-            message: 'Nothing to Save',
-            type: 'info'
-          });
+          this.$notify({title: 'Info', message: 'Nothing to Save', type: 'info'});
           return;
         }
         this.$confirm('Submit current changes?', 'Warning', {
@@ -519,11 +500,7 @@
           this.$axios.put('/api/update_entity_list', url_data).then(response => {
             this.tableData[this.edit_table_pos]['version']++;
             this.tableData[this.edit_table_pos]['entity_list'] = JSON.stringify(this.edit_entity_list);
-            this.$notify({
-              title: 'Success',
-              message: 'Entity submitted successfully',
-              type: 'success'
-            });
+            this.$notify({title: 'Success', message: 'Entity submitted successfully', type: 'success'});
             this.logTable.unshift({'Event': "Save", 'f_id': this.edit_fid, 'info': 'Save to database successfully',
               'entity_list_len': this.edit_entity_list.length});
 
@@ -647,10 +624,12 @@
             let endNum = parseInt(spanObj.getAttribute("data-endNum"));
             let word = spanObj.getAttribute("data-word");
             let cur_content = this.edit_text[elementID];
-            this.removeRedundantHint(elementID);
             this.edit_entity_list[elementID].push({'start': startNum,
               'end': endNum, 'word': word, 'type': this.checkList[0]});
-            let decorated_text = this.genContent(this.edit_entity_list[elementID], cur_content);
+            this.removeRedundantHint(elementID);
+            let tmp_entity_str_ls = this.edit_entity_list[elementID];
+            tmp_entity_str_ls = tmp_entity_str_ls.concat(this.hintList[elementID]);
+            let decorated_text = this.genContent(tmp_entity_str_ls, cur_content);
             this.display_content(decorated_text, elementID);
             this.raw_text[element_id_int] = false;
             this.logTable.unshift({'Event': "Mark", 'f_id': this.edit_fid,

@@ -24,6 +24,9 @@ from readXML_grobid import PaperXMLGrobid
 from wsCore import users, routes
 from model import *
 
+from toolkit.sequence_tagging import text2entity
+
+
 app = FastAPI(routes=routes)
 router = APIRouter()
 os.makedirs('upload', exist_ok=True)
@@ -121,7 +124,7 @@ async def update_entity_list(
                                 example='[{"end": 366, "type": "Research", "word": "entities", "start": 358}]')
 ):
     start = time.time()
-    print(entity_list)
+    # print(entity_list)
     entity_list = eval(entity_list)
     info = await async_db.update_entity_list(f_id, entity_list)
     print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Submit Entity_list Success')
@@ -139,14 +142,16 @@ async def change_status(
     return {'time': time.time() - start}
 
 
-@router.get('/fetch_hint', response_model=GetResponse)
+@router.post('/fetch_hint', response_model=GetResponse)
 async def fetch_hint(
-        text_detail: str = Query(..., description='text detail', example='{[]}'),
+        text_detail: str = Form(..., description='text detail', example='{[]}'),
 ):
     start = time.time()
+
+    text_detail = text_detail.strip('"')
     print(text_detail)
-    api_data = {"text_detail_0": [{"end": 371, "type": "auto-hint", "word": "unified", "start": 364}], "text_detail_1": [{"end": 46, "type": "auto-hint", "word": "alignment", "start": 37}], "text_detail_2": []}
-    # api_data = [{"end": 371, "type": "auto-hint", "word": "unified", "start": 364}]
+    api_data = text2entity.abstract2entity(text_detail)
+    print(api_data)
     print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Fetch Hint Success')
     return {'time': time.time() - start, 'data': api_data}
 
