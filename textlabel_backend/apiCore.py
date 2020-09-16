@@ -24,6 +24,7 @@ from readXML_grobid import PaperXMLGrobid
 from wsCore import users, routes
 from model import *
 
+from urllib import parse
 from toolkit.sequence_tagging import text2entity
 
 
@@ -263,7 +264,7 @@ async def unzip(
 
 @router.get("/get_file/{file_path}")
 async def download_file(file_path: str):
-    file_path = base64.b64decode(file_path).decode()
+    file_path = parse.unquote(base64.b64decode(file_path).decode())
     print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Get File: ' + file_path)
     return FileResponse(file_path)
 

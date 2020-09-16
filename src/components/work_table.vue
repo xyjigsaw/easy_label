@@ -4,25 +4,29 @@
       <el-main style="padding: 0;">
 
         <el-row :gutter="12" type="flex" justify="center" style="background-color: #FFFFFF; padding: 10px;margin: 5px 5px 0 5px;">
-          <el-col :span="3"><div class="grid-content bg-purple">
+          <el-col :span="2"><div class="grid-content bg-purple">
             <el-button type="danger" icon="el-icon-back" circle @click="back2project"></el-button>
             <p style="font-size: 8px; color: #F56C6C; text-align: center; margin: 0;">Exit</p>
           </div></el-col>
-          <el-col :span="3"><div class="grid-content bg-purple">
+          <el-col :span="2"><div class="grid-content bg-purple">
             <el-button type="warning" icon="el-icon-collection-tag" circle @click="editClass"></el-button>
             <p style="font-size: 8px; color: #ebb563; text-align: center; margin: 0;">Class</p>
           </div></el-col>
-          <el-col :span="3"><div class="grid-content bg-purple">
+          <el-col :span="2"><div class="grid-content bg-purple">
             <el-button icon="el-icon-search" circle @click="see_all"></el-button>
             <p style="font-size: 8px; color: #606266; text-align: center; margin: 0;">Preview</p>
           </div></el-col>
-          <el-col :span="3"><div class="grid-content bg-purple">
+          <el-col :span="2"><div class="grid-content bg-purple">
             <el-button type="info" icon="el-icon-message" circle @click="logVis = true"></el-button>
             <p style="font-size: 8px; color: #909399; text-align: center; margin: 0;">Log</p>
           </div></el-col>
-          <el-col :span="3"><div class="grid-content bg-purple">
+          <el-col :span="2"><div class="grid-content bg-purple">
             <el-button type="success" icon="el-icon-check" circle @click="save"></el-button>
             <p style="font-size: 8px; color: #67C23A; text-align: center; margin: 0;">Save</p>
+          </div></el-col>
+          <el-col :span="2"><div class="grid-content bg-purple">
+            <el-button type="primary" icon="el-icon-question" circle @click="showHelp"></el-button>
+            <p style="font-size: 8px; color: #409EFF; text-align: center; margin: 0;">Help</p>
           </div></el-col>
 
           <el-col :span="5"><div class="grid-content bg-purple">
@@ -484,6 +488,25 @@
         }
       },
 
+      showHelp(){
+        let class_shortcuts = '';
+        for(let i = 0; i < this.classNameList.length; i++){
+          class_shortcuts += 'shift + ' + String(i + 1) +
+            ': switch to class <strong><span style="color: ' + this.classColorList[i] + '">' + this.classNameList[i] + '</span></strong></br>';
+        }
+        this.$notify.info({
+          title: 'Help(Shortcuts)',
+          dangerouslyUseHTMLString: true,
+          duration: 0,
+          message:
+            'shift + p: preview all marked entities</br>' +
+            'shift + s: save changes</br>' +
+            'shift + q: leave</br>' +
+            'shift + h: change auto hint status</br>' +
+            'shift + m: change auto mark status</br></br>' + class_shortcuts
+        });
+      },
+
       save(){
         if(this.edit_fid === null){
           this.$notify({title: 'Info', message: 'Nothing to Save', type: 'info'});
@@ -585,13 +608,11 @@
                   this.edit_entity_list[elementID].push({'start': base + start_num,
                     'end': base + end_num, 'word': selected, 'type': this.checkList[0]});
                 }
-
                 let tmp_entity_str_ls = this.edit_entity_list[elementID];
                 if(this.autoHint){
                   this.removeRedundantHint(elementID);
                   tmp_entity_str_ls = tmp_entity_str_ls.concat(this.hintList[elementID]);
                 }
-
                 let decorated_text = this.genContent(tmp_entity_str_ls, this.edit_text[elementID]);
                 this.display_content(decorated_text, elementID);
                 this.raw_text[element_id_int] = false;
@@ -628,13 +649,11 @@
               }
             }
             if(this.edit_entity_list[elementID].length === 0){this.raw_text[element_id_int] = true;}
-
             let tmp_entity_str_ls = this.edit_entity_list[elementID];
             if(this.autoHint){
               this.removeRedundantHint(elementID);
               tmp_entity_str_ls = tmp_entity_str_ls.concat(this.hintList[elementID]);
             }
-
             let decorated_text = this.genContent(tmp_entity_str_ls, cur_content);
             this.display_content(decorated_text, elementID);
             this.logTable.unshift({'Event': "Unmark", 'f_id': this.edit_fid,
@@ -714,7 +733,7 @@
 
       see_PDF(info) {
         let pdf_path = info['file_path'];
-        pdf_path = btoa(pdf_path);
+        pdf_path = btoa(encodeURIComponent(pdf_path));
         this.pdfUrl = pdf.createLoadingTask(this.$route.meta.pdf_port + pdf_path);
         console.log(this.$route.meta.pdf_port + pdf_path);
         this.pdfUrl.promise.then(pdf => {
