@@ -329,7 +329,7 @@
         this.edit_fid = info['f_id'];
         this.edit_text = JSON.parse(info['text']);
         this.edit_entity_list = JSON.parse(info['entity_list']);
-
+        this.raw_text = [];
         for(let key in this.edit_entity_list){
           if(this.edit_entity_list.hasOwnProperty(key))
             this.raw_text.push(this.edit_entity_list[key].length === 0)
@@ -358,7 +358,7 @@
                 let decorated_text = this.genContent(tmp_entity_str_ls, this.edit_text[elementID]);
                 this.display_content(decorated_text, elementID);
               }).catch(err => {
-                this.$notify.error({title: 'Error', message: err});
+                this.$notify({title: 'Hint Unavailable', message: err, type: 'warning'});
               });
             }else{
               let decorated_text = this.genContent(tmp_entity_str_ls, this.edit_text[elementID]);
@@ -538,8 +538,9 @@
           if(this.markMode === true){
             let element_id_int = parseInt(elementID.charAt(elementID.length-1));
             let selected=window.getSelection().toString();
+            let selected_end_char = selected[selected.length - 1];
             selected = selected.trim();
-            if(selected != null){
+            if(selected.length > 0){
               let range = window.getSelection().getRangeAt(0);
               let base = 0;
               let preElement = range.startContainer;
@@ -549,7 +550,10 @@
               }
               let start_num = Math.min(window.getSelection().anchorOffset, window.getSelection().focusOffset);
               let end_num = Math.max(window.getSelection().anchorOffset, window.getSelection().focusOffset);
-              //console.log(base, this.raw_text, start_num, end_num, selected)
+              if(end_num - start_num === selected.length + 1 && selected_end_char === ' '){
+                end_num = end_num - 1;
+              }
+              //console.log(base, this.raw_text, start_num, end_num, selected, selected.length)
               if((this.raw_text[element_id_int] || base > 0 || (!this.raw_text[element_id_int] && base === 0))
                 && start_num < end_num && end_num - start_num === selected.length && this.checkList.length === 1){
 
@@ -557,6 +561,9 @@
                   let marginChar = [',', '.', ':', ';', '?', '!', ' ', '(', ')', '>', '<', '"', '*', '%', '-', '_', '\n']
                   let selectedPosList = [];
                   let tmpPos = 0;
+                  if(this.edit_text[elementID].indexOf(selected) < selected.length){
+                    selectedPosList.push(this.edit_text[elementID].indexOf(selected));
+                  }
                   while(tmpPos > -1){
                     tmpPos = this.edit_text[elementID].indexOf(selected, tmpPos + selected.length);
                     selectedPosList.push(tmpPos);
@@ -567,7 +574,8 @@
                   }
                   for(let i = 0; i < selectedPosList.length - 1; i++){
                     if(allStartNum.indexOf(selectedPosList[i]) === -1){
-                      if(marginChar.indexOf(this.edit_text[elementID][selectedPosList[i] - 1]) > -1 && marginChar.indexOf(this.edit_text[elementID][selectedPosList[i] + selected.length]) > -1){
+                      if(marginChar.indexOf(this.edit_text[elementID][selectedPosList[i] - 1]) > -1 && marginChar.indexOf(this.edit_text[elementID][selectedPosList[i] + selected.length]) > -1 ||
+                      selectedPosList[i] === 0 && marginChar.indexOf(this.edit_text[elementID][selectedPosList[i] + selected.length]) > -1){
                         this.edit_entity_list[elementID].push({'start': selectedPosList[i],
                           'end': selectedPosList[i] + selected.length, 'word': selected, 'type': this.checkList[0]});
                       }
@@ -578,7 +586,13 @@
                     'end': base + end_num, 'word': selected, 'type': this.checkList[0]});
                 }
 
-                let decorated_text = this.genContent(this.edit_entity_list[elementID], this.edit_text[elementID]);
+                let tmp_entity_str_ls = this.edit_entity_list[elementID];
+                if(this.autoHint){
+                  this.removeRedundantHint(elementID);
+                  tmp_entity_str_ls = tmp_entity_str_ls.concat(this.hintList[elementID]);
+                }
+
+                let decorated_text = this.genContent(tmp_entity_str_ls, this.edit_text[elementID]);
                 this.display_content(decorated_text, elementID);
                 this.raw_text[element_id_int] = false;
                 this.logTable.unshift({'Event': "Mark", 'f_id': this.edit_fid,
@@ -614,7 +628,14 @@
               }
             }
             if(this.edit_entity_list[elementID].length === 0){this.raw_text[element_id_int] = true;}
-            let decorated_text = this.genContent(this.edit_entity_list[elementID], cur_content);
+
+            let tmp_entity_str_ls = this.edit_entity_list[elementID];
+            if(this.autoHint){
+              this.removeRedundantHint(elementID);
+              tmp_entity_str_ls = tmp_entity_str_ls.concat(this.hintList[elementID]);
+            }
+
+            let decorated_text = this.genContent(tmp_entity_str_ls, cur_content);
             this.display_content(decorated_text, elementID);
             this.logTable.unshift({'Event': "Unmark", 'f_id': this.edit_fid,
               'info': 'Class: ' + spanClass + ', Start: ' + startNum + ', End: ' + endNum,
