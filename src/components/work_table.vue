@@ -363,6 +363,8 @@
                 this.display_content(decorated_text, elementID);
               }).catch(err => {
                 this.$notify({title: 'Hint Unavailable', message: err, type: 'warning'});
+                let decorated_text = this.genContent(tmp_entity_str_ls, this.edit_text[elementID]);
+                this.display_content(decorated_text, elementID);
               });
             }else{
               let decorated_text = this.genContent(tmp_entity_str_ls, this.edit_text[elementID]);
