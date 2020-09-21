@@ -15,7 +15,11 @@
           <i class="el-icon-question"></i>
           <span slot="title">Help</span>
         </el-menu-item>
-        <el-menu-item index="3" @click="isCollapse = !isCollapse">
+        <el-menu-item index="3" @click="navResearcher">
+          <i class="el-icon-star-off"></i>
+          <span slot="title">Researcher</span>
+        </el-menu-item>
+        <el-menu-item index="4" @click="isCollapse = !isCollapse">
           <i class="el-icon-caret-right" v-if="isCollapse"></i>
           <span slot="title" v-if="isCollapse">Unfold</span>
           <i class="el-icon-caret-left" v-if="!isCollapse"></i>
@@ -52,7 +56,7 @@
         this.$router.push("/home/help");
       },
       navResearcher(){
-        this.$router.push("http://10.10.10.1:8083/#/research");
+        this.$router.push("/home/external_page");
       }
     }
   };

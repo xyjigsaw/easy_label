@@ -5,6 +5,7 @@ import class_manage from "@/components/class_manage";
 import project_manage from "@/components/project_manage";
 import work_table from "@/components/work_table";
 import help from "@/components/help";
+import external_page from "@/components/external_page";
 
 Vue.use(Router)
 
@@ -23,6 +24,7 @@ export default new Router({
         {path: 'class_manage', name: 'class_manage', component: class_manage},
         {path: 'project_manage', name: 'project_manage', component: project_manage},
         {path: 'help', name: 'help', component: help},
+        {path: 'external_page', name: 'external_page', component: external_page},
         {path: 'work_table', name: 'work_table', component: work_table, meta:
             {ws_port: 'ws://10.10.2.85:8000/ws', pdf_port: 'http://10.10.2.85:8000/get_file/'}},
       ]
