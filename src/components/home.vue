@@ -7,6 +7,10 @@
     <el-container>
       <!-- aside menu-->
       <el-menu class="el-menu-vertical-demo" @open="handleOpen" @close="handleClose" :collapse="isCollapse">
+        <el-menu-item index="5" @click="navDashboard">
+          <i class="el-icon-star-off"></i>
+          <span slot="title">Home</span>
+        </el-menu-item>
         <el-menu-item index="1" @click="navProject">
           <i class="el-icon-folder-opened"></i>
           <span slot="title">Project</span>
@@ -16,7 +20,7 @@
           <span slot="title">Help</span>
         </el-menu-item>
         <el-menu-item index="3" @click="navResearcher">
-          <i class="el-icon-star-off"></i>
+          <i class="el-icon-share"></i>
           <span slot="title">Researcher</span>
         </el-menu-item>
         <el-menu-item index="4" @click="isCollapse = !isCollapse">
@@ -39,8 +43,11 @@
     name: "home",
     data() {
       return {
-        isCollapse: true,
+        isCollapse: false,
       };
+    },
+    created() {
+      this.$router.push("/home/dashboard");
     },
     methods: {
       handleOpen(key, keyPath) {
@@ -57,6 +64,9 @@
       },
       navResearcher(){
         this.$router.push("/home/external_page");
+      },
+      navDashboard(){
+        this.$router.push("/home/dashboard");
       }
     }
   };
@@ -78,6 +88,7 @@
     padding: 0;
   }
   .el-menu-vertical-demo{
+    text-align: left;
     background-color: #FFFFFF;
     font-size: large;
     font-weight: bolder;
@@ -87,6 +98,7 @@
     width: 200px;
     min-height: 400px;
     min-width: 200px;
+
   }
   .el-menu--collapse {
     min-width: 64px;
