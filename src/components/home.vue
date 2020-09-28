@@ -63,7 +63,7 @@
         this.$router.push("/home/help");
       },
       navResearcher(){
-        this.$router.push("/home/external_page");
+        this.$router.push("/home/researcher");
       },
       navDashboard(){
         this.$router.push("/home/dashboard");

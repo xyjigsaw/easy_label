@@ -27,6 +27,9 @@ from model import *
 from urllib import parse
 from toolkit.sequence_tagging import text2entity
 
+from pydantic import BaseModel
+from researcher_db import db_search, db_rand, db_get_entity_class, db_update_entity_list, db_insert_entity_class
+
 
 app = FastAPI(routes=routes)
 router = APIRouter()
@@ -310,6 +313,81 @@ async def unzip_more(
     except Exception as e:
         print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Unzip Add Error')
         return {"message": str(e), 'time': time.time() - start}
+
+
+#############################################
+# Researcher
+#############################################
+
+@router.get("/research_get")
+async def research_get(name: str, affiliation: str, limit: int):
+    start = time.time()
+    api_data = db_search(name, affiliation, limit)
+    return {"message": "success", 'time': time.time() - start, 'data': api_data}
+
+
+class ResearchItem(BaseModel):
+    name: str = ''
+    affiliation: str = ''
+    limit: int = 10
+    rand_search: int = 0
+
+
+@router.post('/research_post')
+async def research_post(request: ResearchItem):
+    start = time.time()
+    name = request.name
+    affiliation = request.affiliation
+    limit = request.limit
+    rand_search = request.rand_search
+    if rand_search == 1:
+        api_data = db_rand()
+    else:
+        api_data = db_search(name, affiliation, limit)
+    entity_class = db_get_entity_class()
+    print('Search: ', 'success', name, affiliation, limit, time.strftime('%Y/%m/%d/%H/%M/%S', time.localtime(time.time())))
+    return {"message": "success", 'time': time.time() - start, 'data': api_data, 'entity_class': entity_class}
+
+
+class SubmitItem(BaseModel):
+    e_id: str = ''
+    res: dict = {}
+
+
+@router.post('/research_submit')
+async def research_submit(request: SubmitItem):
+    start = time.time()
+    try:
+        e_id = request.e_id
+        res = request.res
+        info = db_update_entity_list(e_id, str(res['Entity_list']))
+        print('Submit: ', info, e_id, time.strftime('%Y/%m/%d/%H/%M/%S', time.localtime(time.time())))
+        return {"message": info, 'time': time.time() - start, 'data': ''}
+    except Exception:
+        return {"message": "error", 'time': time.time() - start, 'data': ''}
+
+
+class ClassItem(BaseModel):
+    addLabelName: str = ''
+    addLabelColor: str = ''
+
+
+@router.post('/research_class_submit')
+async def research_class_submit(request: ClassItem):
+    start = time.time()
+    try:
+        addLabelName = request.addLabelName
+        addLabelColor = request.addLabelColor
+        info = db_insert_entity_class(addLabelName, addLabelColor)
+        print('Submit Label: ', info, addLabelName, addLabelColor, time.strftime('%Y/%m/%d/%H/%M/%S', time.localtime(time.time())))
+        return {"message": info, 'time': time.time() - start, 'data': ''}
+    except Exception:
+        return {"message": "error", 'time': time.time() - start, 'data': ''}
+
+
+#############################################
+# Config
+#############################################
 
 
 async def catch_exceptions_middleware(request: Request, call_next):

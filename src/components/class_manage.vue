@@ -13,22 +13,16 @@
         <el-button type="text">Classes: {{ tableData.length }}</el-button>
       </el-col>
 
-      <el-col :span="2" :offset="2">
-        <div class="grid-content bg-purple-light">
-          <el-button type="danger" plain icon="el-icon-back" @click="back2project">Exit</el-button>
-        </div>
+      <el-col :span="2" :offset="3">
+        <el-button type="danger" plain icon="el-icon-back" @click="back2project">Exit</el-button>
       </el-col>
 
       <el-col :span="2">
-        <div class="grid-content bg-purple">
-          <el-button type="success" plain icon="el-icon-edit-outline" @click="tagFile">Mark</el-button>
-        </div>
+        <el-button type="success" plain icon="el-icon-edit-outline" @click="tagFile">Mark</el-button>
       </el-col>
 
       <el-col :span="2">
-        <div class="grid-content bg-purple">
-          <el-button type="primary" plain icon="el-icon-plus" @click="addLabelVisible = true">Add Class</el-button>
-        </div>
+        <el-button type="primary" plain icon="el-icon-plus" @click="addLabelVisible = true">Add Class</el-button>
       </el-col>
 
     </el-row>
