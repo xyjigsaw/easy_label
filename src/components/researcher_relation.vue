@@ -212,7 +212,7 @@ export default {
             cur_content = this.genContent(entity_str_ls, cur_content);
             tagged_data.push({'Content': cur_content, 'id': response.data['data'][i]['id'],
               'Affiliation': response.data['data'][i]['Affiliation'], 'AuthorName': response.data['data'][i]['AuthorName'],
-              'origin_content': origin_content, 'Entity_list': response.data['data'][i]['Entity_list']});
+              'origin_content': origin_content, 'Entity_list': response.data['data'][i]['Entity_list'], 'Mark_relation': eval(response.data['data'][i]['Mark_relation'])});
           }
           this.tableData = tagged_data;
           this.showTable = true;
@@ -259,6 +259,9 @@ export default {
     //page jumper
     handleCurrentChange(val) {
       this.currentPage = val;
+      this.relTable = this.tableData[this.currentPage - 1]['Mark_relation'];
+      console.log(this.tableData[this.currentPage - 1]);
+
       this.current_id = this.tableData[this.currentPage - 1]['id'];
       this.current_data = this.tableData[this.currentPage - 1];
       let el = eval(this.current_data['Entity_list']);
@@ -291,17 +294,14 @@ export default {
       }).then(() => {
         let url_data={
           e_id: this.current_id,
-          res: this.current_data,
+          res: {'Relation_list': this.relTable},
         };
-        this.$axios.post('/api/research_submit', url_data).then(response => {
+        this.$axios.post('/api/research_rel_submit', url_data).then(response => {
           if (response.data['message'] === 'success') {
             this.$message({
               message: 'Submit successfully!',
               type: 'success'
             });
-            this.tableData_save[this.currentPage_save - 1] = this.tableData[0];
-            this.exit();
-            this.rand_search();
           }else{
             this.$message.error('Submit failed!');
           }
@@ -361,6 +361,7 @@ export default {
     click_check(){
 
     },
+
     change_pos() {
       let obj = document.getElementsByClassName("labelGroup");
       if (obj.item(0).style.position === 'fixed') {

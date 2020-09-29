@@ -61,7 +61,17 @@ class PaperXMLGrobid:
             for item in raw_xml:
                 item_head = item.getElementsByTagName('head')[0].childNodes[0].nodeValue.lower()
                 if 'conclusion' in item_head or 'conclusions' in item_head:
-                    return self.parse_p(item.getElementsByTagName('p'))
+                    text = item.toprettyxml()
+                    text = text.replace('<p>', '').replace('</p>', '@@@')
+                    pattern = re.compile(r'<[^>]+>', re.S)
+                    result = pattern.sub('', text).replace('\n', ' ')
+                    result = ' '.join([i for i in result.split() if i.lower() != 'conclusion']).replace('@@@', '\n')
+                    p_val = re.findall('[a-zA-Z0-9\s+\t\.\!\/_,$%^*()+\"\'\-]+', result, re.S)
+                    p_val = "".join(p_val)
+                    return p_val.strip('\n')
+            return ''
+        except Exception:
+            return ''
 
             return ''
         except Exception:

@@ -28,7 +28,8 @@ from urllib import parse
 from toolkit.sequence_tagging import text2entity
 
 from pydantic import BaseModel
-from researcher_db import db_search, db_rand, db_get_entity_class, db_update_entity_list, db_insert_entity_class
+from researcher_db import db_search, db_rand, db_get_entity_class, db_update_entity_list, db_insert_entity_class, \
+    db_update_relation_list
 
 
 app = FastAPI(routes=routes)
@@ -361,6 +362,19 @@ async def research_submit(request: SubmitItem):
         e_id = request.e_id
         res = request.res
         info = db_update_entity_list(e_id, str(res['Entity_list']))
+        print('Submit: ', info, e_id, time.strftime('%Y/%m/%d/%H/%M/%S', time.localtime(time.time())))
+        return {"message": info, 'time': time.time() - start, 'data': ''}
+    except Exception:
+        return {"message": "error", 'time': time.time() - start, 'data': ''}
+
+
+@router.post('/research_rel_submit')
+async def research_rel_submit(request: SubmitItem):
+    start = time.time()
+    try:
+        e_id = request.e_id
+        res = request.res
+        info = db_update_relation_list(e_id, str(res['Relation_list']))
         print('Submit: ', info, e_id, time.strftime('%Y/%m/%d/%H/%M/%S', time.localtime(time.time())))
         return {"message": info, 'time': time.time() - start, 'data': ''}
     except Exception:

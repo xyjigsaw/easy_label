@@ -1,23 +1,34 @@
 <template>
   <div>
-    <el-card class="box-card" style="width: 60%;">
+    <el-card class="box-card" style="width: 45%;">
       <div slot="header" class="clearfix">
-        <span>Notification</span>
+        <h2>Notification</h2>
       </div>
       <div class="text item">
-        <li>Features</li>
-        <li>Functions</li>
+        <strong>Last  Updated: 20200928</strong><br>
+        <h2>New Features</h2>
+        <li>Researcher entity and relation(beta) marking added</li>
+        <li>Auto Hint added</li>
+        <li>Auto Mark added</li>
+        <li>Shortcuts for switching labels added</li>
+        <h2>TODO</h2>
+        <li>Optimize HCI</li>
+        <li>Update Researcher relation(beta)</li>
       </div>
     </el-card>
 
-    <el-card class="box-card" style="width: 30%;">
+    <el-card class="box-card" style="width: 45%;">
       <div slot="header" class="clearfix">
-        <span>Start</span>
+        <h2>Start</h2>
       </div>
       <div class="text item">
-        <el-button type="success" @click="navProject">Project</el-button>
+        <el-button type="primary" @click="navProject">Main Project</el-button>
+        <br><br>
+        <el-button type="success" @click="navREntity">Researcher Entity</el-button>
+        <el-button type="success" @click="navRRelation">Researcher Relation</el-button>
+        <br><br>
         <el-button type="info" @click="navHelp">Help</el-button>
-        <el-button type="primary" disabled>Feedback</el-button>
+        <el-button type="warning" disabled>Feedback</el-button>
 
       </div>
     </el-card>
@@ -39,6 +50,12 @@ name: "dashborad",
     },
     navHelp(){
       this.$router.push("/home/help");
+    },
+    navREntity(){
+      this.$router.push("/home/researcher_entity");
+    },
+    navRRelation(){
+      this.$router.push("/home/researcher_relation");
     },
   },
 }

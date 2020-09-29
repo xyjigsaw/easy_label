@@ -8,7 +8,8 @@ import help from "@/components/help";
 import dashboard from "@/components/dashboard";
 import external_page from "@/components/external_page";
 import researcher from "@/components/researcher";
-import rel_mark from "@/components/rel_mark";
+import researcher_entity from "@/components/researcher_entity";
+import researcher_relation from "@/components/researcher_relation";
 
 Vue.use(Router)
 
@@ -29,7 +30,8 @@ export default new Router({
         {path: 'help', name: 'help', component: help},
         {path: 'dashboard', name: 'dashboard', component: dashboard},
         {path: 'researcher', name: 'researcher', component: researcher},
-        {path: 'rel_mark', name: 'rel_mark', component: rel_mark},
+        {path: 'researcher_relation', name: 'researcher_relation', component: researcher_relation},
+        {path: 'researcher_entity', name: 'researcher_entity', component: researcher_entity},
         {path: 'external_page', name: 'external_page', component: external_page},
         {path: 'work_table', name: 'work_table', component: work_table, meta:
             {ws_port: 'ws://10.10.2.85:8000/ws', pdf_port: 'http://10.10.2.85:8000/get_file/'}},
