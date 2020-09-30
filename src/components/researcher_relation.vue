@@ -18,22 +18,12 @@
         </div></el-col>
       </el-row>
 
-      <div class="class_ls">
-        <el-checkbox-group class="labelGroup" v-model="checkList" @change="click_check" :max="check_max" :min="check_min" style="position: static;">
-          <el-checkbox label="event" style="padding:8px; border-radius:5px; background-color:#a2fffd;font-weight: bold;"></el-checkbox>
-          <el-checkbox label="time" style="padding:8px; border-radius:5px; background-color:#c8ffb0;font-weight: bold;"></el-checkbox>
-          <el-checkbox label="case1" style="padding:8px; border-radius:5px; background-color:#ff9c9c;font-weight: bold;"></el-checkbox>
-          <el-checkbox label="case2" style="padding:8px; border-radius:5px; background-color:#fde395;font-weight: bold;"></el-checkbox>
-          <el-button icon="el-icon-rank" @click="change_pos" style="padding: 10px; margin: 10px;"></el-button>
-          <br>
-          <br>
-          <el-button type="info" size="medium" plain>event: {{ cur_rel_ls['event']['word'] }}</el-button>
-          <el-button type="info" size="medium" plain>time: {{ cur_rel_ls['time']['word'] }}</el-button>
-          <el-button type="info" size="medium" plain>case1: {{ cur_rel_ls['case1']['word'] }}</el-button>
-          <el-button type="info" size="medium" plain v-if="this.checkList.length === 4">event: {{ cur_rel_ls['case2']['word'] }}</el-button>
-          <el-button type="primary" round @click="justAdd">Add</el-button>
-        </el-checkbox-group>
-
+      <div class="labelGroup">
+        <el-button type="info" size="large" plain>Event: {{ cur_rel_ls['event']['word'] }}</el-button>
+        <el-button type="info" size="medium" plain>Time: {{ cur_rel_ls['time']['word'] }}</el-button>
+        <el-button type="info" size="medium" plain>Affiliation: {{ cur_rel_ls['affiliation']['word'] }}</el-button>
+        <el-button type="primary" round @click="justAdd">Add</el-button>
+        <el-button icon="el-icon-rank" @click="change_pos" style="padding: 10px; margin: 10px;"></el-button>
       </div>
       <br>
       <div id="all_info">
@@ -67,7 +57,7 @@
     </el-main>
 
 
-    <el-aside width="500px" style="height: 1000px;background-color: #FFFFFF; box-shadow: 0 0 5px #dddddd; padding:5px; margin: 5px 5px 5px 0;">
+    <el-aside width="450px" style="height: 1000px;background-color: #FFFFFF; box-shadow: 0 0 5px #dddddd; padding:5px; margin: 5px 5px 5px 0;">
       <el-table
         class="tableClass"
         :data="relTable"
@@ -86,18 +76,13 @@
         </el-table-column>
         <el-table-column
           prop="time.word"
-          label="time"
-          width="90">
-        </el-table-column>
-        <el-table-column
-          prop="case1.word"
-          label="case1"
+          label="Time"
           width="100">
         </el-table-column>
         <el-table-column
-          prop="case2.word"
-          label="case2"
-          width="80">
+          prop="affiliation.word"
+          label="Affiliation"
+          width="100">
         </el-table-column>
         <el-table-column
           label="Edit"
@@ -147,11 +132,8 @@ export default {
       current_data: null,
 
       cur_words: [],
-      checkList: ['event', 'time', 'case1'],
-      check_max: 4,
-      check_min :3,
 
-      cur_rel_ls: {'event': '', 'time': '', 'case1': '', 'case2': ''},
+      cur_rel_ls: {'event': '', 'time': '', 'affiliation': ''},
       cur_type_ls: [],
       relTable: [],
 
@@ -167,6 +149,8 @@ export default {
       this.msg = 'Researcher Relation Mark';
       this.is_edit = true;
       this.currentPage_save = this.currentPage;
+      this.cur_rel_ls = {'event': '', 'time': '', 'affiliation': ''};
+      this.cur_type_ls = [];
     },
 
     search(is_rand_search) {
@@ -302,6 +286,8 @@ export default {
               message: 'Submit successfully!',
               type: 'success'
             });
+            this.cur_rel_ls = {'event': '', 'time': '', 'affiliation': ''};
+            this.cur_type_ls = [];
           }else{
             this.$message.error('Submit failed!');
           }
@@ -341,15 +327,22 @@ export default {
           if(spanClass === 'Time'){
             this.cur_rel_ls['time'] = {'word': spanObj.innerHTML, 'start': startNum, 'end': endNum, 'type': spanClass};
           }else if(spanClass === 'Institut'){
-            this.cur_rel_ls['case1'] = {'word': spanObj.innerHTML, 'start': startNum, 'end': endNum, 'type': spanClass};
+            this.cur_rel_ls['affiliation'] = {'word': spanObj.innerHTML, 'start': startNum, 'end': endNum, 'type': spanClass};
           }else{
             this.cur_rel_ls['event'] = {'word': spanObj.innerHTML, 'start': startNum, 'end': endNum, 'type': spanClass};
           }
           if(this.cur_type_ls.indexOf(spanClass) === -1){
-            this.cur_type_ls.push(spanClass);
-            if(this.cur_type_ls.length === this.checkList.length){
-              this.relTable.push({'event': this.cur_rel_ls['event'], 'time': this.cur_rel_ls['time'], 'case1': this.cur_rel_ls['case1'], 'case2': this.cur_rel_ls['case2']});
-              this.cur_rel_ls = {'event': '', 'time': '', 'case1': '', 'case2': ''};
+            if(spanClass === 'Time' || spanClass === 'Institut'){
+              this.cur_type_ls.push(spanClass);
+            }else{
+              if(this.cur_type_ls.indexOf('others') === -1){
+                this.cur_type_ls.push('others');
+              }
+            }
+
+            if(this.cur_type_ls.length === 3){
+              this.relTable.push({'event': this.cur_rel_ls['event'], 'time': this.cur_rel_ls['time'], 'affiliation': this.cur_rel_ls['affiliation']});
+              this.cur_rel_ls = {'event': '', 'time': '', 'affiliation': ''};
               this.cur_type_ls = [];
               console.log(this.relTable);
             }
@@ -376,8 +369,8 @@ export default {
     },
 
     justAdd(){
-      this.relTable.push({'event': this.cur_rel_ls['event'], 'time': this.cur_rel_ls['time'], 'case1': this.cur_rel_ls['case1'], 'case2': this.cur_rel_ls['case2']});
-      this.cur_rel_ls = {'event': '', 'time': '', 'case1': '', 'case2': ''};
+      this.relTable.push({'event': this.cur_rel_ls['event'], 'time': this.cur_rel_ls['time'], 'affiliation': this.cur_rel_ls['affiliation']});
+      this.cur_rel_ls = {'event': '', 'time': '', 'affiliation': ''};
       this.cur_type_ls = [];
     }
 

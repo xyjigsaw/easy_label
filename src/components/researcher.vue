@@ -2,6 +2,7 @@
   <div>
     <el-button type="primary" @click="navREntity">Entity</el-button>
     <el-button type="success" @click="navRRelation">Relation</el-button>
+    <el-button type="warning" @click="navRBeta">BETA</el-button>
   </div>
 </template>
 
@@ -20,6 +21,10 @@ export default {
 
     navRRelation(){
       this.$router.push("/home/researcher_relation");
+    },
+
+    navRBeta(){
+      this.$router.push("/home/researcher_beta");
     },
   },
 }

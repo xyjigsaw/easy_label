@@ -57,12 +57,48 @@
           <el-button v-if="edit_fid" type="text">Version: {{ tableData[edit_table_pos]['version'] }} </el-button>
           <el-button v-if="edit_fid" type="text">{{ tableData[edit_table_pos]['file_name'] }}</el-button>
           <div id="text_detail_group">
-            <el-button v-if="edit_fid" type="text">Abstract</el-button>
-            <div id="text_detail_0" @mouseup="selectText('text_detail_0')" @click="clickEntity('text_detail_0')"></div>
-            <el-button v-if="edit_fid" type="text">Introduction</el-button>
-            <div id="text_detail_1" @mouseup="selectText('text_detail_1')" @click="clickEntity('text_detail_1')"></div>
-            <el-button v-if="edit_fid" type="text">Conclusion</el-button>
-            <div id="text_detail_2" @mouseup="selectText('text_detail_2')" @click="clickEntity('text_detail_2')"></div>
+          <el-collapse v-model="activeNames">
+            <el-collapse-item title="· Abstract" name="1">
+              <div id="text_detail_0" @mouseup="selectText('text_detail_0')" @click="clickEntity('text_detail_0')"></div>
+            </el-collapse-item>
+            <el-collapse-item title="· Introduction" name="2">
+              <div id="text_detail_1" @mouseup="selectText('text_detail_1')" @click="clickEntity('text_detail_1')"></div>
+            </el-collapse-item>
+            <el-collapse-item title="· Conclusion" name="3">
+              <div id="text_detail_2" @mouseup="selectText('text_detail_2')" @click="clickEntity('text_detail_2')"></div>
+            </el-collapse-item>
+
+            <el-collapse-item title="· Conclusion" name="3">
+              <div id="text_detail_3" @mouseup="selectText('text_detail_2')" @click="clickEntity('text_detail_2')"></div>
+            </el-collapse-item>
+            <el-collapse-item title="· Conclusion" name="4">
+              <div id="text_detail_4" @mouseup="selectText('text_detail_2')" @click="clickEntity('text_detail_2')"></div>
+            </el-collapse-item>
+            <el-collapse-item title="· Conclusion" name="5">
+              <div id="text_detail_5" @mouseup="selectText('text_detail_2')" @click="clickEntity('text_detail_2')"></div>
+            </el-collapse-item>
+            <el-collapse-item title="· Conclusion" name="6">
+              <div id="text_detail_6" @mouseup="selectText('text_detail_2')" @click="clickEntity('text_detail_2')"></div>
+            </el-collapse-item>
+            <el-collapse-item title="· Conclusion" name="7">
+              <div id="text_detail_7" @mouseup="selectText('text_detail_2')" @click="clickEntity('text_detail_2')"></div>
+            </el-collapse-item>
+            <el-collapse-item title="· Conclusion" name="8">
+              <div id="text_detail_8" @mouseup="selectText('text_detail_2')" @click="clickEntity('text_detail_2')"></div>
+            </el-collapse-item>
+            <el-collapse-item title="· Conclusion" name="9">
+              <div id="text_detail_9" @mouseup="selectText('text_detail_2')" @click="clickEntity('text_detail_2')"></div>
+            </el-collapse-item>
+            <el-collapse-item title="· Conclusion" name="10">
+              <div id="text_detail_10" @mouseup="selectText('text_detail_2')" @click="clickEntity('text_detail_2')"></div>
+            </el-collapse-item>
+            <el-collapse-item title="· Conclusion" name="11">
+              <div id="text_detail_11" @mouseup="selectText('text_detail_2')" @click="clickEntity('text_detail_2')"></div>
+            </el-collapse-item>
+            <el-collapse-item title="· Conclusion" name="12">
+              <div id="text_detail_12" @mouseup="selectText('text_detail_2')" @click="clickEntity('text_detail_2')"></div>
+            </el-collapse-item>
+          </el-collapse>
           </div>
         </div>
 
@@ -210,6 +246,8 @@
         pdf_cur_page: 1,
         pdf_page_count: 0,
         showPDF: true,
+
+        activeNames: ['1', '2', '3'],
       };
     },
     methods: {

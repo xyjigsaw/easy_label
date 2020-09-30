@@ -204,11 +204,21 @@ class ParseThread(threading.Thread):
             paper = PaperXMLGrobid(
                 'upload/' + self.addProjectName + '/parse/' + self.tmpName[
                                                               self.tmpName.rfind('/') + 1:-3] + 'grobid.xml')
+            '''
             self.output_texts = {'texts': {'text_detail_0': paper.get_paper_abstract(),
                                            'text_detail_1': paper.get_paper_introduction(),
                                            'text_detail_2': paper.get_paper_conclusion()},
                                  'name': self.tmpName[self.tmpName.rfind('/') + 1:-4],
                                  'path': self.tmpName}
+            '''
+            self.output_texts = {'texts': {},
+                                 'name': self.tmpName[self.tmpName.rfind('/') + 1:-4],
+                                 'path': self.tmpName}
+            section_texts = paper.get_paper_sections()
+            text_prefix = 'text_detail_'
+            for i in range(len(section_texts)):
+                self.output_texts['texts'][text_prefix + str(i)] = section_texts[i]
+
         except Exception as e:
             pass
         print('Done')
@@ -254,7 +264,11 @@ async def unzip(
         file_num = 0
         for item in output_texts_ls:
             try:
-                await async_db.insert_file(item['name'], item['path'], item['texts'], p_id)
+                text_prefix = 'text_detail_'
+                text_details = {}
+                for i in range(len(item['texts'])):
+                    text_details[text_prefix + str(i)] = []
+                await async_db.insert_file(item['name'], item['path'], item['texts'], p_id, text_details)
                 file_num += 1
             except Exception as e:
                 pass
@@ -304,7 +318,11 @@ async def unzip_more(
         file_num = 0
         for item in output_texts_ls:
             try:
-                await async_db.insert_file(item['name'], item['path'], item['texts'], p_id)
+                text_prefix = 'text_detail_'
+                text_details = {}
+                for i in range(len(item['texts'])):
+                    text_details[text_prefix + str(i)] = []
+                await async_db.insert_file(item['name'], item['path'], item['texts'], p_id, text_details)
                 file_num += 1
             except Exception as e:
                 pass

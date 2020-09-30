@@ -77,17 +77,39 @@ class PaperXMLGrobid:
         except Exception:
             return ''
 
-    def getLeastNode(self, node):
-        flag = node.hasChildNodes()
-        if flag:
-            for nodechild in node.childNodes:
-                if nodechild.nodeType == 1 and nodechild.tagName == 'p':
-                    print(nodechild.data)
-                    self.getLeastNode(nodechild)
+    def get_paper_sections(self):
+        section_ls = [self.get_paper_abstract()]
+        try:
+            raw_xml = \
+                self.data.getElementsByTagName('text')[0].getElementsByTagName('body')[0].getElementsByTagName('div')
+
+            for item in raw_xml:
+                item_head = item.getElementsByTagName('head')[0].childNodes[0].nodeValue
+                text = item.toprettyxml()
+                text = text.replace('<p>', '').replace('</p>', '@@@')
+                pattern = re.compile(r'<[^>]+>', re.S)
+                result = pattern.sub('', text).replace('\n', ' ')
+                result = ' '.join([i for i in result.split()]).replace('@@@', '\n')
+                p_val = re.findall('[a-zA-Z0-9\s+\t\.\!\/_,$%^*()+\"\'\-]+', result, re.S)
+                p_val = "".join(p_val)
+                p_val = p_val.strip('\n').replace(item_head, '').strip()
+                if(len(p_val.split())) > 10:
+                    section_ls.append(p_val)
+            return section_ls
+        except Exception:
+            return []
+
+            return ''
+        except Exception:
+            return []
 
 
 if __name__ == '__main__':
     start = time.time()
-    paper = PaperXMLGrobid('upload/dde_test/parse/10三古，巴西马里诺冰期盖帽白云岩.grobid.xml')
-    print(paper.get_paper_introduction())
+    paper = PaperXMLGrobid('upload/NEW_DDE_TEST/parse/10三古，巴西马里诺冰期盖帽白云岩.grobid.xml')
+    secs = paper.get_paper_sections()
+    for i in secs:
+        print('--------------')
+        print(i)
+    print(len(secs))
     print(time.time() - start)

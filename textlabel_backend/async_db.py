@@ -70,11 +70,9 @@ async def update_project(p_id, file_num):
     return 'success'
 
 
-async def insert_file(name, path, text, p_id):
+async def insert_file(name, path, text, p_id, text_details):
     sql = "INSERT INTO file(file_name, file_path, version, entity_list, text, p_id, is_edit) VALUES(%s, %s, %s, %s, %s, %s, %s)"
-    ret = await mysql_select(sql, name, path, 0, json.dumps({'text_detail_0': [],
-                                                             'text_detail_1': [],
-                                                             'text_detail_2': []}), json.dumps(text), p_id, 0, db='label_sys')
+    ret = await mysql_select(sql, name, path, 0, json.dumps(text_details), json.dumps(text), p_id, 0, db='label_sys')
     return 'success'
 
 
