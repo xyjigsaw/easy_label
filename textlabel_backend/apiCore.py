@@ -31,7 +31,6 @@ from pydantic import BaseModel
 from researcher_db import db_search, db_rand, db_get_entity_class, db_update_entity_list, db_insert_entity_class, \
     db_update_relation_list
 
-
 app = FastAPI(routes=routes)
 router = APIRouter()
 os.makedirs('upload', exist_ok=True)
@@ -185,22 +184,18 @@ def findAllFile(base):
 
 
 class ParseThread(threading.Thread):
-    def __init__(self, tmpName, addProjectName):
+    def __init__(self, tmpName, addProjectName, sectionList):
         threading.Thread.__init__(self)
         self.parser = Parser('grobid')
         self.tmpName = tmpName
         self.addProjectName = addProjectName
+        self.sectionList = sectionList
         self.output_texts = None
 
     def run(self):
         print('Start Parsing ' + self.tmpName)
         try:
             self.parser.parse('text', self.tmpName, 'upload/' + self.addProjectName + '/parse', 50)
-            '''
-            paper = PaperXML(
-                'upload/' + self.addProjectName + '/parse/' + self.tmpName[self.tmpName.rfind('/') + 1:-3] + 'cermine.xml')
-            texts = paper.get_secs()
-            '''
             paper = PaperXMLGrobid(
                 'upload/' + self.addProjectName + '/parse/' + self.tmpName[
                                                               self.tmpName.rfind('/') + 1:-3] + 'grobid.xml')
@@ -211,13 +206,21 @@ class ParseThread(threading.Thread):
                                  'name': self.tmpName[self.tmpName.rfind('/') + 1:-4],
                                  'path': self.tmpName}
             '''
-            self.output_texts = {'texts': {},
-                                 'name': self.tmpName[self.tmpName.rfind('/') + 1:-4],
-                                 'path': self.tmpName}
-            section_texts = paper.get_paper_sections()
-            text_prefix = 'text_detail_'
-            for i in range(len(section_texts)):
-                self.output_texts['texts'][text_prefix + str(i)] = section_texts[i]
+            if 'others' in self.sectionList:
+
+                self.output_texts = {'texts': {},
+                                     'name': self.tmpName[self.tmpName.rfind('/') + 1:-4],
+                                     'path': self.tmpName}
+                section_texts = paper.get_paper_sections()
+                text_prefix = 'text_detail_'
+                for i in range(len(section_texts)):
+                    self.output_texts['texts'][text_prefix + str(i)] = section_texts[i]
+            else:
+                self.output_texts = {'texts': {'text_detail_0': paper.get_paper_abstract(),
+                                               'text_detail_1': paper.get_paper_introduction(),
+                                               'text_detail_2': paper.get_paper_conclusion()},
+                                     'name': self.tmpName[self.tmpName.rfind('/') + 1:-4],
+                                     'path': self.tmpName}
 
         except Exception as e:
             pass
@@ -231,7 +234,8 @@ class ParseThread(threading.Thread):
 @router.get('/unzip', response_model=UnzipResponse)
 async def unzip(
         filePath: str = Query(..., description='zip file path', example='upload/xxx'),
-        addProjectName: str = Query(..., description='project name', example='xxx')
+        addProjectName: str = Query(..., description='project name', example='xxx'),
+        sectionList: str = Query(..., description='section to be parsed', example="['abstract']"),
 ):
     start = time.time()
     project_dir = 'upload/' + addProjectName + '/'
@@ -248,7 +252,7 @@ async def unzip(
     for i in findAllFile(base):
         if '__MACOSX' not in i:
             tmpName = i.replace('\\', '/')
-            thread_pool.append(ParseThread(tmpName, addProjectName))
+            thread_pool.append(ParseThread(tmpName, addProjectName, sectionList.split(',')))
     for th in thread_pool:
         th.start()
     for th in thread_pool:
@@ -292,6 +296,7 @@ async def unzip_more(
         p_id: str = Query(..., description='project id', example='4beb867cdeba4f259d9202f5bc58a47c'),
         filePath: str = Query(..., description='zip file path', example='upload/xxx'),
         projectName: str = Query(..., description='project name', example='xxx'),
+        sectionList: str = Query(..., description='section to be parsed', example="['abstract']"),
 ):
     start = time.time()
     add_id = str(uuid.uuid4())
@@ -304,7 +309,7 @@ async def unzip_more(
     for i in findAllFile(base):
         if '__MACOSX' not in i:
             tmpName = i.replace('\\', '/')
-            thread_pool.append(ParseThread(tmpName, projectName))
+            thread_pool.append(ParseThread(tmpName, projectName, sectionList.split(',')))
     for th in thread_pool:
         th.start()
     for th in thread_pool:
@@ -364,7 +369,8 @@ async def research_post(request: ResearchItem):
     else:
         api_data = db_search(name, affiliation, limit)
     entity_class = db_get_entity_class()
-    print('Search: ', 'success', name, affiliation, limit, time.strftime('%Y/%m/%d/%H/%M/%S', time.localtime(time.time())))
+    print('Search: ', 'success', name, affiliation, limit,
+          time.strftime('%Y/%m/%d/%H/%M/%S', time.localtime(time.time())))
     return {"message": "success", 'time': time.time() - start, 'data': api_data, 'entity_class': entity_class}
 
 
@@ -411,7 +417,8 @@ async def research_class_submit(request: ClassItem):
         addLabelName = request.addLabelName
         addLabelColor = request.addLabelColor
         info = db_insert_entity_class(addLabelName, addLabelColor)
-        print('Submit Label: ', info, addLabelName, addLabelColor, time.strftime('%Y/%m/%d/%H/%M/%S', time.localtime(time.time())))
+        print('Submit Label: ', info, addLabelName, addLabelColor,
+              time.strftime('%Y/%m/%d/%H/%M/%S', time.localtime(time.time())))
         return {"message": info, 'time': time.time() - start, 'data': ''}
     except Exception:
         return {"message": "error", 'time': time.time() - start, 'data': ''}
@@ -423,13 +430,13 @@ async def research_class_submit(request: ClassItem):
 
 
 async def catch_exceptions_middleware(request: Request, call_next):
-  try:
-    return await call_next(request)
-  except Exception:
-    # print(e)
-    # print("".join(traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)))
-    traceback.print_exc()
-    return Response("Internal server error", status_code=500)
+    try:
+        return await call_next(request)
+    except Exception:
+        # print(e)
+        # print("".join(traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)))
+        traceback.print_exc()
+        return Response("Internal server error", status_code=500)
 
 
 app.include_router(router)

@@ -10,6 +10,14 @@
           <el-input v-model="addProjectName" autocomplete="off"></el-input>
         </el-form-item>
       </el-form>
+
+      <div>
+        <el-checkbox-group v-model="sectionList" :min=3 size="medium">
+          <el-checkbox-button v-for="item in sectionName" :label="item" :key="item"
+                              :disabled="item === 'abstract' || item=== 'introduction' || item=== 'conclusion'">{{item}}</el-checkbox-button>
+        </el-checkbox-group>
+      </div>
+      <br>
       <el-upload
         class="upload-zip"
         ref="upload"
@@ -41,6 +49,14 @@
         <el-button type="text">Created Time: {{moreFileInfo['time']}}</el-button>
       </el-card>
       <br>
+      <div>
+        <el-checkbox-group v-model="sectionList" :min=3 size="medium">
+          <el-checkbox-button v-for="item in sectionName" :label="item" :key="item"
+                              :disabled="item === 'abstract' || item=== 'introduction' || item=== 'conclusion'">{{item}}</el-checkbox-button>
+        </el-checkbox-group>
+      </div>
+      <br>
+      <br>
       <el-upload
         class="upload-zip-add"
         ref="upload_add"
@@ -71,7 +87,7 @@
         border
         highlight-current-row
         v-loading="loading"
-        element-loading-text="Parsing PDF, Please Do not Leave, 10s/PDF"
+        element-loading-text="Parsing PDF, Please Do not Leave, 5s/PDF"
         element-loading-spinner="el-icon-loading"
         element-loading-background="rgba(0, 0, 0, 0.8)">
         <el-table-column label="ID" prop="p_id" width="280"></el-table-column>
@@ -119,7 +135,8 @@
         moreFileVisible: false,
         moreList: [],
 
-
+        sectionList: ['abstract', 'introduction', 'conclusion'],
+        sectionName: ['abstract', 'introduction', 'conclusion', 'others'],
       }
     },
 
@@ -176,6 +193,7 @@
         let url_data={
           filePath: this.filePath,
           addProjectName: this.addProjectName,
+          sectionList: this.sectionList.toString(),
         };
         this.$axios.get('/api/unzip', {params: url_data}).then(response => {
           if (response.data['message'] === 'success') {
@@ -231,6 +249,7 @@
           p_id: this.moreFileInfo['p_id'],
           filePath: response_up['filepath'],
           projectName: this.moreFileInfo['name'],
+          sectionList: this.sectionList.toString(),
         };
         this.$axios.get('/api/unzip_more', {params: url_data}).then(response => {
           if (response.data['message'] === 'success') {

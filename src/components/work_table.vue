@@ -1,6 +1,9 @@
 <template>
   <div>
-    <el-container>
+    <el-container v-loading="loadingNow"
+                  element-loading-text="Loading Now..."
+                  element-loading-spinner="el-icon-loading"
+                  element-loading-background="rgba(0, 0, 0, 0.8)">
       <el-main style="padding: 0;">
 
         <el-row :gutter="12" type="flex" justify="center" style="background-color: #FFFFFF; padding: 10px;margin: 5px 5px 0 5px;">
@@ -56,55 +59,19 @@
           <p v-show="!edit_fid">Click <i class="el-icon-edit"></i> In The Table On The Right To Start</p>
           <el-button v-if="edit_fid" type="text">Version: {{ tableData[edit_table_pos]['version'] }} </el-button>
           <el-button v-if="edit_fid" type="text">{{ tableData[edit_table_pos]['file_name'] }}</el-button>
-          <div id="text_detail_group">
-          <el-collapse v-model="activeNames">
-            <el-collapse-item title="· Abstract" name="1">
-              <div id="text_detail_0" @mouseup="selectText('text_detail_0')" @click="clickEntity('text_detail_0')"></div>
-            </el-collapse-item>
-            <el-collapse-item title="· Introduction" name="2">
-              <div id="text_detail_1" @mouseup="selectText('text_detail_1')" @click="clickEntity('text_detail_1')"></div>
-            </el-collapse-item>
-            <el-collapse-item title="· Conclusion" name="3">
-              <div id="text_detail_2" @mouseup="selectText('text_detail_2')" @click="clickEntity('text_detail_2')"></div>
-            </el-collapse-item>
-
-            <el-collapse-item title="· Conclusion" name="3">
-              <div id="text_detail_3" @mouseup="selectText('text_detail_2')" @click="clickEntity('text_detail_2')"></div>
-            </el-collapse-item>
-            <el-collapse-item title="· Conclusion" name="4">
-              <div id="text_detail_4" @mouseup="selectText('text_detail_2')" @click="clickEntity('text_detail_2')"></div>
-            </el-collapse-item>
-            <el-collapse-item title="· Conclusion" name="5">
-              <div id="text_detail_5" @mouseup="selectText('text_detail_2')" @click="clickEntity('text_detail_2')"></div>
-            </el-collapse-item>
-            <el-collapse-item title="· Conclusion" name="6">
-              <div id="text_detail_6" @mouseup="selectText('text_detail_2')" @click="clickEntity('text_detail_2')"></div>
-            </el-collapse-item>
-            <el-collapse-item title="· Conclusion" name="7">
-              <div id="text_detail_7" @mouseup="selectText('text_detail_2')" @click="clickEntity('text_detail_2')"></div>
-            </el-collapse-item>
-            <el-collapse-item title="· Conclusion" name="8">
-              <div id="text_detail_8" @mouseup="selectText('text_detail_2')" @click="clickEntity('text_detail_2')"></div>
-            </el-collapse-item>
-            <el-collapse-item title="· Conclusion" name="9">
-              <div id="text_detail_9" @mouseup="selectText('text_detail_2')" @click="clickEntity('text_detail_2')"></div>
-            </el-collapse-item>
-            <el-collapse-item title="· Conclusion" name="10">
-              <div id="text_detail_10" @mouseup="selectText('text_detail_2')" @click="clickEntity('text_detail_2')"></div>
-            </el-collapse-item>
-            <el-collapse-item title="· Conclusion" name="11">
-              <div id="text_detail_11" @mouseup="selectText('text_detail_2')" @click="clickEntity('text_detail_2')"></div>
-            </el-collapse-item>
-            <el-collapse-item title="· Conclusion" name="12">
-              <div id="text_detail_12" @mouseup="selectText('text_detail_2')" @click="clickEntity('text_detail_2')"></div>
-            </el-collapse-item>
-          </el-collapse>
+          <div id="text_detail_group" v-if="edit_fid">
+            <el-collapse v-model="activeNames">
+              <el-collapse-item v-for="text_id in text_detail_ls" :name="text_id" :key="text_id"
+                                :title="text_id.substr(text_id.lastIndexOf('_') + 1) === '0' ? '· ABSTRACT': '· Section ' + text_id.substr(text_id.lastIndexOf('_') + 1)">
+                <div :id="text_id" @mouseup="selectText(text_id)" @click="clickEntity(text_id)"></div>
+              </el-collapse-item>
+            </el-collapse>
           </div>
         </div>
 
       </el-main>
 
-      <el-aside width="400px" style="height: 1000px;background-color: #FFFFFF; box-shadow: 0 0 5px #dddddd; padding:5px; margin: 5px 5px 5px 0;">
+      <el-aside width="400px" style="height: 1200px;background-color: #FFFFFF; box-shadow: 0 0 5px #dddddd; padding:5px; margin: 5px 5px 5px 0;">
         <el-row>
           <el-button type="text">Project: {{ name }}</el-button>
           <el-button type="text">Users: {{ onlineUsers }}</el-button>
@@ -142,7 +109,7 @@
             label="Edit"
             width="60">
             <template slot-scope="scope">
-              <el-button icon="el-icon-edit" type="primary" @click="editFile(scope.$index, scope.row)" size="mini"></el-button>
+              <el-button icon="el-icon-edit" type="primary" @click="editFile(scope.$index, scope.row)" size="mini" :loading="loadingNow"></el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -192,6 +159,7 @@
 
       </div>
     </el-drawer>
+
   </div>
 </template>
 
@@ -234,7 +202,7 @@
 
         autoMarkSelection: true,
         autoHint: true,
-        hintList: {"text_detail_0": [], "text_detail_1": [], "text_detail_2": []},
+        hintList: {},
 
         logVis: false,
         logDirection: 'btt',
@@ -247,7 +215,10 @@
         pdf_page_count: 0,
         showPDF: true,
 
-        activeNames: ['1', '2', '3'],
+        activeNames: ['text_detail_0'],
+        text_detail_ls :[],
+
+        loadingNow:false,
       };
     },
     methods: {
@@ -352,6 +323,13 @@
 
       },
 
+      gen_text_frame(text_ls_dict){
+        this.text_detail_ls = [];
+        for(let item in text_ls_dict){
+          this.text_detail_ls.push(item);
+        }
+      },
+
       editFile(index, info){
         if(info['is_edit'] === 1){
           this.$notify({title: 'Warning', message: 'This file is being edited.', duration: 4000, type: 'warning'});
@@ -366,6 +344,8 @@
             type: 'info'
           });
         }
+        this.gen_text_frame(JSON.parse(info['entity_list']));
+        this.activeNames = ['text_detail_0'];
         this.see_PDF(info);
         this.showPDF = true;
         this.edit_fid = info['f_id'];
@@ -388,28 +368,28 @@
         for(let elementID in this.edit_entity_list){
           if(this.edit_entity_list.hasOwnProperty(elementID)){
             let tmp_entity_str_ls = this.edit_entity_list[elementID];
-            if(this.autoHint) {
-
-              let url_data = new FormData();
-
-              url_data.append('text_detail', this.edit_text[elementID]);
-              this.$axios.post('/api/fetch_hint', url_data).then(response => {
-                this.hintList[elementID] = response.data['data'];
-                this.removeRedundantHint(elementID);
+            this.loadingNow = true;
+            let url_data = new FormData();
+            url_data.append('text_detail', this.edit_text[elementID]);
+            this.$axios.post('/api/fetch_hint', url_data).then(response => {
+              this.hintList[elementID] = response.data['data'];
+              this.removeRedundantHint(elementID);
+              if(this.autoHint){
                 tmp_entity_str_ls = tmp_entity_str_ls.concat(this.hintList[elementID]);
-                let decorated_text = this.genContent(tmp_entity_str_ls, this.edit_text[elementID]);
-                this.display_content(decorated_text, elementID);
-              }).catch(err => {
-                this.$notify({title: 'Hint Unavailable', message: err, type: 'warning'});
-                let decorated_text = this.genContent(tmp_entity_str_ls, this.edit_text[elementID]);
-                this.display_content(decorated_text, elementID);
-              });
-            }else{
+              }
               let decorated_text = this.genContent(tmp_entity_str_ls, this.edit_text[elementID]);
               this.display_content(decorated_text, elementID);
-            }
+              if(elementID === this.text_detail_ls[this.text_detail_ls.length - 1]){
+                this.loadingNow = false;
+              }
+            }).catch(err => {
+              this.$notify({title: 'Hint Unavailable', message: err, type: 'warning'});
+              let decorated_text = this.genContent(tmp_entity_str_ls, this.edit_text[elementID]);
+              this.display_content(decorated_text, elementID);
+            });
           }
         }
+
         this.logTable.unshift({'Event': "Mark", 'f_id': this.edit_fid, 'info': 'Edit file to mark entity',
           'entity_list_len': this.count_entity_num()});
       },
@@ -857,4 +837,3 @@
   };
 
 </script>
-

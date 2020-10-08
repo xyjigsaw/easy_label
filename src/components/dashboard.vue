@@ -5,12 +5,13 @@
         <h2>Notification</h2>
       </div>
       <div class="text item">
-        <strong>Last  Updated: 20200928</strong><br>
+        <strong>Last  Updated: 20201008</strong><br>
         <h2>New Features</h2>
-        <li>Researcher entity and relation(beta) marking added</li>
-        <li>Auto Hint added</li>
-        <li>Auto Mark added</li>
-        <li>Shortcuts for switching labels added</li>
+        <li>Sections can be collapsed.</li>
+        <li>Researcher entity and relation(beta) marking</li>
+        <li>Auto Hint</li>
+        <li>Auto Mark</li>
+        <li>Shortcuts for switching labels</li>
         <h2>TODO</h2>
         <li>Optimize HCI</li>
         <li>Update Researcher relation(beta)</li>
