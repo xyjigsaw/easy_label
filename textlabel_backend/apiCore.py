@@ -183,6 +183,23 @@ def findAllFile(base):
                 yield fullname
 
 
+class HintThread(threading.Thread):
+    def __init__(self, text):
+        threading.Thread.__init__(self)
+        self.text = text
+        self.hintList = None
+
+    def run(self):
+        try:
+            self.hintList = text2entity.abstract2entity(self.text)
+        except:
+            pass
+
+    def getResult(self):
+        if self.hintList is not None:
+            return self.hintList
+
+
 class ParseThread(threading.Thread):
     def __init__(self, tmpName, addProjectName, sectionList):
         threading.Thread.__init__(self)
@@ -210,18 +227,37 @@ class ParseThread(threading.Thread):
 
                 self.output_texts = {'texts': {},
                                      'name': self.tmpName[self.tmpName.rfind('/') + 1:-4],
-                                     'path': self.tmpName}
+                                     'path': self.tmpName,
+                                     'entity_list': {},
+                                     'hint': {}
+                                     }
                 section_texts = paper.get_paper_sections()
+                hint_thread_pool = []
                 text_prefix = 'text_detail_'
                 for i in range(len(section_texts)):
                     self.output_texts['texts'][text_prefix + str(i)] = section_texts[i]
+                    self.output_texts['entity_list'][text_prefix + str(i)] = []
+                    # self.output_texts['hint'][text_prefix + str(i)] = text2entity.abstract2entity(section_texts[i])
+                    hint_thread_pool.append(HintThread(section_texts[i]))
+                for th in hint_thread_pool:
+                    th.start()
+                for i in range(len(hint_thread_pool)):
+                    hint_thread_pool[i].join()
+                    self.output_texts['hint'][text_prefix + str(i)] = (hint_thread_pool[i].getResult())
+
             else:
                 self.output_texts = {'texts': {'text_detail_0': paper.get_paper_abstract(),
                                                'text_detail_1': paper.get_paper_introduction(),
                                                'text_detail_2': paper.get_paper_conclusion()},
                                      'name': self.tmpName[self.tmpName.rfind('/') + 1:-4],
-                                     'path': self.tmpName}
-
+                                     'path': self.tmpName,
+                                     'entity_list': {'text_detail_0': [],
+                                                     'text_detail_1': [],
+                                                     'text_detail_2': []},
+                                     'hint': {'text_detail_0': text2entity.abstract2entity(paper.get_paper_abstract()),
+                                              'text_detail_1': text2entity.abstract2entity(paper.get_paper_introduction()),
+                                              'text_detail_2': text2entity.abstract2entity(paper.get_paper_conclusion())}
+                                     }
         except Exception as e:
             pass
         print('Done')
@@ -268,11 +304,7 @@ async def unzip(
         file_num = 0
         for item in output_texts_ls:
             try:
-                text_prefix = 'text_detail_'
-                text_details = {}
-                for i in range(len(item['texts'])):
-                    text_details[text_prefix + str(i)] = []
-                await async_db.insert_file(item['name'], item['path'], item['texts'], p_id, text_details)
+                await async_db.insert_file(item['name'], item['path'], item['texts'], p_id, item['entity_list'], item['hint'])
                 file_num += 1
             except Exception as e:
                 pass
@@ -323,14 +355,11 @@ async def unzip_more(
         file_num = 0
         for item in output_texts_ls:
             try:
-                text_prefix = 'text_detail_'
-                text_details = {}
-                for i in range(len(item['texts'])):
-                    text_details[text_prefix + str(i)] = []
-                await async_db.insert_file(item['name'], item['path'], item['texts'], p_id, text_details)
+                await async_db.insert_file(item['name'], item['path'], item['texts'], p_id, item['entity_list'], item['hint'])
                 file_num += 1
             except Exception as e:
-                pass
+                print(e)
+
         await async_db.update_project(p_id, file_num)
         print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Unzip Add Success')
         return {"message": "success", 'time': time.time() - start}

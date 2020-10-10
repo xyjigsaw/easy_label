@@ -1,6 +1,6 @@
 <template>
   <div>
-    <el-container v-loading="loadingNow"
+    <el-container v-loading="false"
                   element-loading-text="Loading Now..."
                   element-loading-spinner="el-icon-loading"
                   element-loading-background="rgba(0, 0, 0, 0.8)">
@@ -662,12 +662,23 @@
           if(this.checkList.length === 1 && spanClass === this.checkList[0]) {
             let startNum = parseInt(spanObj.getAttribute("data-startNum"));
             let endNum = parseInt(spanObj.getAttribute("data-endNum"));
+            let spanWord = spanObj.getAttribute("data-word");
             let cur_content = this.edit_text[elementID];
             for(let i = this.edit_entity_list[elementID].length-1; i >= 0; i--){
-              if(this.edit_entity_list[elementID][i]['start'] === startNum && this.edit_entity_list[elementID][i]['end'] === endNum){
-                this.edit_entity_list[elementID].splice(i,1);
+              if(this.autoMarkSelection){
+                if(this.edit_entity_list[elementID][i]['end'] - this.edit_entity_list[elementID][i]['start'] === endNum - startNum
+                  && this.edit_entity_list[elementID][i]['word'] === spanWord){
+                  this.edit_entity_list[elementID].splice(i,1);
+                }
+              }else{
+                if(this.edit_entity_list[elementID][i]['start'] === startNum && this.edit_entity_list[elementID][i]['end'] === endNum){
+                  this.edit_entity_list[elementID].splice(i,1);
+                }
               }
+
             }
+
+
             if(this.edit_entity_list[elementID].length === 0){this.raw_text[element_id_int] = true;}
             let tmp_entity_str_ls = this.edit_entity_list[elementID];
             if(this.autoHint){
