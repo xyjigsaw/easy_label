@@ -1,6 +1,6 @@
 <template>
   <div>
-    <el-container v-loading="false"
+    <el-container v-loading="loadingNow"
                   element-loading-text="Loading Now..."
                   element-loading-spinner="el-icon-loading"
                   element-loading-background="rgba(0, 0, 0, 0.8)">
@@ -365,25 +365,23 @@
           }
         }
         this.change_status(this.edit_table_pos, 1, true);
+        let hint_raw_ls = JSON.parse(info['hint']);
         for(let elementID in this.edit_entity_list){
           if(this.edit_entity_list.hasOwnProperty(elementID)){
             let tmp_entity_str_ls = this.edit_entity_list[elementID];
-            this.loadingNow = true;
             let url_data = new FormData();
-            url_data.append('text_detail', this.edit_text[elementID]);
-            this.$axios.post('/api/fetch_hint', url_data).then(response => {
-              this.hintList[elementID] = response.data['data'];
+            url_data.append('string', 'aaa');
+            this.$axios.post('/api/heart_beat', url_data).then(response => {
+              this.hintList[elementID] = hint_raw_ls[elementID]
               this.removeRedundantHint(elementID);
               if(this.autoHint){
                 tmp_entity_str_ls = tmp_entity_str_ls.concat(this.hintList[elementID]);
               }
               let decorated_text = this.genContent(tmp_entity_str_ls, this.edit_text[elementID]);
               this.display_content(decorated_text, elementID);
-              if(elementID === this.text_detail_ls[this.text_detail_ls.length - 1]){
-                this.loadingNow = false;
-              }
             }).catch(err => {
-              this.$notify({title: 'Hint Unavailable', message: err, type: 'warning'});
+              this.hintList[elementID] = hint_raw_ls[elementID]
+              this.removeRedundantHint(elementID);
               let decorated_text = this.genContent(tmp_entity_str_ls, this.edit_text[elementID]);
               this.display_content(decorated_text, elementID);
             });
@@ -715,14 +713,16 @@
           let url_data = new FormData();
           url_data.append('f_id', this.edit_fid);
           url_data.append('status', status);
+          this.loadingNow = true;
           this.$axios.put('/api/change_status', url_data).then(response => {
             this.tableData[pos]['is_edit'] = status;
             let wsInfo = {'message': {'p_id': this.p_id, 'f_id': this.edit_fid, 'status': status, 'pos': pos}, 'subject': 'lock'}
             if(send_msg){
               this.sendMessage(JSON.stringify(wsInfo));
             }
+            this.loadingNow = false;
           }).catch(err => {
-            console.log(err);
+            this.$notify.error({title: 'Error', message: err});
           });
         }
       },
@@ -821,12 +821,14 @@
           let keyPos = digitalShift.indexOf(this.keydown[this.keydown.length - 1]);
           this.keydown = '';
           if(keyPos <= that.classNameList.length){
-            this.checkList = [that.classNameList[keyPos]];
-            that.labelIns.checkList = this.checkList;
-            that.labelIns.click_check();
-            this.keydown = '';
-            that.$notify({title: that.classNameList[keyPos], message: 'You have switched to class ' + that.classNameList[keyPos] + '.', type: 'success'
-            });
+            if(that.classNameList[keyPos] !== undefined){
+              this.checkList = [that.classNameList[keyPos]];
+              that.labelIns.checkList = this.checkList;
+              that.labelIns.click_check();
+              this.keydown = '';
+              that.$notify({title: that.classNameList[keyPos], message: 'You have switched to class ' + that.classNameList[keyPos] + '.', type: 'success'
+              });
+            }
           }
         }
       }

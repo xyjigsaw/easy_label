@@ -160,6 +160,15 @@ async def fetch_hint(
     return {'time': time.time() - start, 'data': api_data}
 
 
+@router.post('/heart_beat')
+async def heart_beat(
+        string: str = Form(..., description='random string', example='a'),
+):
+    start = time.time()
+    print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'HEART BEAT ' + string)
+    return {'time': time.time() - start, 'data': 'heart_beat'}
+
+
 #############################################
 # Upload
 #############################################
