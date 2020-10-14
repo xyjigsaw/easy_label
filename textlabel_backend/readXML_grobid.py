@@ -92,7 +92,7 @@ class PaperXMLGrobid:
                 result = ' '.join([i for i in result.split()]).replace('@@@', '\n')
                 p_val = re.findall('[a-zA-Z0-9\s+\t\.\!\/_,$%^*()+\"\'\-]+', result, re.S)
                 p_val = "".join(p_val)
-                p_val = p_val.strip('\n').replace(item_head, '').strip()
+                p_val = item_head + '\n' + p_val.strip('\n').replace(item_head, '').strip()
                 if(len(p_val.split())) > 10:
                     section_ls.append(p_val)
             return section_ls
