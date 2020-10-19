@@ -32,7 +32,7 @@
             <p style="font-size: 8px; color: #409EFF; text-align: center; margin: 0;">Help</p>
           </div></el-col>
 
-          <el-col :span="5"><div class="grid-content bg-purple">
+          <el-col :span="5" v-show="markMode"><div class="grid-content bg-purple">
             <el-switch
               style="display: block; margin-top: 1px;"
               v-model="autoHint"
@@ -47,6 +47,18 @@
               active-color="#13ce66"
               inactive-color="#dddddd"
               active-text="AUTO MARK">
+            </el-switch>
+          </div></el-col>
+
+          <el-col :span="5"><div class="grid-content bg-purple">
+            <el-switch
+              style="display: block; margin-top: 8px;"
+              v-model="markMode"
+              active-color="#13ce66"
+              inactive-color="#409eff"
+              active-text="Entity"
+              inactive-text="Relation"
+              >
             </el-switch>
           </div></el-col>
 
@@ -68,17 +80,16 @@
             </el-collapse>
           </div>
         </div>
-
       </el-main>
 
       <el-aside width="400px" style="height: 1200px;background-color: #FFFFFF; box-shadow: 0 0 5px #dddddd; padding:5px; margin: 5px 5px 5px 0;">
         <el-row>
           <el-button type="text">Project: {{ name }}</el-button>
           <el-button type="text">Users: {{ onlineUsers }}</el-button>
-          <el-button type="primary" icon="el-icon-document" v-show="this.pdf_page_count > 0" @click="showPDF = ! showPDF" size="mini" plain></el-button>
+          <el-button type="primary" icon="el-icon-document" v-show="this.pdf_page_count > 0 && this.markMode" @click="showPDF = ! showPDF" size="mini" plain></el-button>
         </el-row>
 
-        <div v-show="this.showPDF && this.pdf_page_count > 0" class="pdf_div" style="background-color: #FFFFFF; box-shadow: 0 0 5px #dddddd; padding:2px; margin: 1px;">
+        <div v-show="this.showPDF && this.pdf_page_count > 0 && this.markMode" class="pdf_div" style="background-color: #FFFFFF; box-shadow: 0 0 5px #dddddd; padding:2px; margin: 1px;">
           <pdf
             :src="pdfUrl"
             ref="ref"
@@ -92,6 +103,43 @@
             <el-button type="primary" icon="el-icon-caret-left" @click="changePdfPage(0)" size="mini" plain></el-button>
             <el-button type="primary" icon="el-icon-caret-right" @click="changePdfPage(1)" size="mini" plain></el-button>
           </el-row>
+        </div>
+
+        <div v-show="!markMode" style="position: static;z-index: 999999;" class="relation_table">
+          <el-row style="background-color: #FFFFFF;border: 1px solid #dddddd; border-bottom: 0">
+            <el-button type="text">TRIPLES</el-button>
+            <el-button icon="el-icon-rank" @click="change_pos('relation_table')" style="padding: 10px; margin: 10px;" v-show="!this.markMode"></el-button>
+            <el-button type="primary" round @click="justAdd">Add</el-button>
+            <div class="relation_board" v-show="!markMode" style="background-color:#FFFFFF;padding: 8px;margin: 0px 5px;position: static;">
+              <el-row>
+                <el-button type="info" size="medium" plain style="width: 100%">Head: {{ this.single_triple['head']['word']}}</el-button>
+              </el-row>
+              <el-row>
+                <el-button type="info" size="medium" plain style="width: 100%">Relation: {{ this.single_triple['relation']['word']}}</el-button>
+              </el-row>
+              <el-row>
+                <el-button type="info" size="medium" plain style="width: 100%">Tail: {{ this.single_triple['tail']['word']}}</el-button>
+              </el-row>
+            </div>
+          </el-row>
+
+          <el-table
+            class="tableClass"
+            :data="relTable"
+            stripe
+            max-height="500px"
+            style="width: 100%; text-align: center; font-size: 5px; border: 1px solid #dddddd; margin-bottom: 5px; "
+            :row-style="{height:'8px'}" :cell-style="{padding:'5px 0'}">
+            <el-table-column type="index" label="ID" width="40"></el-table-column>
+            <el-table-column prop="head.word" label="HEAD" width="100"></el-table-column>
+            <el-table-column prop="relation.word" label="RELATION" width="100"></el-table-column>
+            <el-table-column prop="tail.word" label="TAIL" width="100"></el-table-column>
+            <el-table-column label="Edit" width="45">
+              <template slot-scope="scope">
+                <el-button @click.native.prevent="deleteRel(scope.$index, relTable)" type="text" size="small" icon="el-icon-delete"></el-button>
+              </template>
+            </el-table-column>
+          </el-table>
         </div>
 
         <el-table
@@ -199,6 +247,8 @@
         raw_text: [],
 
         markMode: true,
+        single_triple: {'head': '', 'relation': '', 'tail': ''},
+        relTable: [],
 
         autoMarkSelection: true,
         autoHint: true,
@@ -219,6 +269,9 @@
         text_detail_ls :[],
 
         loadingNow:false,
+
+        entityChanged: false,
+        relationChanged: false,
       };
     },
     methods: {
@@ -313,7 +366,6 @@
               }else if(obj.item(0).style.position === 'static'){
                 obj.item(0).style.position='fixed';
               }
-
             },
           }
         });
@@ -387,7 +439,8 @@
             });
           }
         }
-
+        console.log('DETAIL', info);
+        this.relTable = JSON.parse(info['Mark_relation']);
         this.logTable.unshift({'Event': "Mark", 'f_id': this.edit_fid, 'info': 'Edit file to mark entity',
           'entity_list_len': this.count_entity_num()});
       },
@@ -527,7 +580,7 @@
 
       save(){
         if(this.edit_fid === null){
-          this.$notify({title: 'Info', message: 'Nothing to Save', type: 'info'});
+          this.$notify({title: 'Message', message: 'Nothing to Save', type: 'info'});
           return;
         }
         this.$confirm('Submit current changes?', 'Warning', {
@@ -535,24 +588,47 @@
           cancelButtonText: 'Cancel',
           type: 'warning'
         }).then(() => {
-          let url_data = new FormData();
-          url_data.append('f_id', this.edit_fid);
-          url_data.append('entity_list', JSON.stringify(this.edit_entity_list));
-          this.$axios.put('/api/update_entity_list', url_data).then(response => {
-            this.tableData[this.edit_table_pos]['version']++;
-            this.tableData[this.edit_table_pos]['entity_list'] = JSON.stringify(this.edit_entity_list);
-            this.$notify({title: 'Success', message: 'Entity submitted successfully', type: 'success'});
-            this.logTable.unshift({'Event': "Save", 'f_id': this.edit_fid, 'info': 'Save to database successfully',
-              'entity_list_len': this.edit_entity_list.length});
+          if(this.entityChanged){
+            let url_data = new FormData();
+            url_data.append('f_id', this.edit_fid);
+            url_data.append('entity_list', JSON.stringify(this.edit_entity_list));
+            this.$axios.put('/api/update_entity_list', url_data).then(response => {
+              this.tableData[this.edit_table_pos]['version']++;
+              this.tableData[this.edit_table_pos]['entity_list'] = JSON.stringify(this.edit_entity_list);
+              this.$notify({title: 'Success', message: 'Entity submitted successfully', type: 'success'});
+              this.logTable.unshift({'Event': "Save", 'f_id': this.edit_fid, 'info': 'Save to database successfully',
+                'entity_list_len': this.edit_entity_list.length});
 
-            let wsInfo = {'message': {'p_id': this.p_id, 'f_id': this.edit_fid, 'entity_list': JSON.stringify(this.edit_entity_list),
-                'version': this.tableData[this.edit_table_pos]['version'], 'pos': this.edit_table_pos}, 'subject': 'save'}
-            this.sendMessage(JSON.stringify(wsInfo));
-          }).catch(err => {
-            this.$notify.error({title: 'Error', message: err});
-            this.logTable.unshift({'Event': "Save", 'f_id': this.edit_fid, 'info': 'Cannot Save to database',
-              'entity_list_len': this.edit_entity_list.length});
-          });
+              let wsInfo = {'message': {'p_id': this.p_id, 'f_id': this.edit_fid, 'entity_list': JSON.stringify(this.edit_entity_list),
+                  'version': this.tableData[this.edit_table_pos]['version'], 'pos': this.edit_table_pos}, 'subject': 'save'}
+              this.sendMessage(JSON.stringify(wsInfo));
+              this.entityChanged = false;
+            }).catch(err => {
+              this.$notify.error({title: 'Error', message: err});
+              this.logTable.unshift({'Event': "Save", 'f_id': this.edit_fid, 'info': 'Cannot Save to database',
+                'entity_list_len': this.edit_entity_list.length});
+            });
+          }else{
+            this.$notify.info({title: 'Message', message: 'No changes in entity list'});
+          }
+
+          if(this.relationChanged){
+            let url_data = new FormData();
+            url_data.append('f_id', this.edit_fid);
+            url_data.append('relation_list', JSON.stringify(this.relTable));
+            this.$axios.put('/api/update_relation_list', url_data).then(response => {
+              this.$notify({title: 'Success', message: 'Relation submitted successfully', type: 'success'});
+              let wsInfo = {'message': {'p_id': this.p_id, 'f_id': this.edit_fid, 'relation_list': JSON.stringify(this.relTable),
+                  'pos': this.edit_table_pos}, 'subject': 'save_relation'}
+              this.sendMessage(JSON.stringify(wsInfo));
+              this.relationChanged = false;
+            }).catch(err => {
+              this.$notify.error({title: 'Error', message: err});
+            });
+          }else{
+            this.$notify.info({title: 'Message', message: 'No changes in relation list'});
+          }
+
         }).catch(() => {
         });
       },
@@ -577,6 +653,7 @@
       selectText(elementID){
         try{
           if(this.markMode === true){
+            this.entityChanged = true;
             let element_id_int = parseInt(elementID.charAt(elementID.length-1));
             let selected=window.getSelection().toString();
             let selected_end_char = selected[selected.length - 1];
@@ -643,8 +720,7 @@
             }else{
             }
           }else{//relation mode
-            let spanObj=document.elementFromPoint(event.clientX, event.clientY);
-            console.log(spanObj);
+
           }
 
         }catch(err){
@@ -654,6 +730,7 @@
 
       clickEntity(elementID){
         if(this.markMode === true){
+          this.entityChanged = true;
           let element_id_int = parseInt(elementID.charAt(elementID.length-1));
           let spanObj=document.elementFromPoint(event.clientX, event.clientY);
           let spanClass = spanObj.getAttribute("class");
@@ -705,6 +782,44 @@
               'info': 'Selected: ' + word + ', Start: ' + startNum + ', End: ' + endNum,
               'entity_list_len': this.count_entity_num()});
           }
+        }else{
+          let spanObj=document.elementFromPoint(event.clientX, event.clientY);
+          let spanClass = spanObj.getAttribute("class");
+          let startNum = parseInt(spanObj.getAttribute("data-startNum"));
+          let endNum = parseInt(spanObj.getAttribute("data-endNum"));
+          if(!isNaN(startNum) && spanClass !== 'auto-hint'){
+            console.log('Click Span: ' + spanObj.innerHTML + ' ' + startNum + ' ' + endNum + ' ' + spanClass);
+            if(this.single_triple.head === ''){
+              this.single_triple['head'] = {'word': spanObj.innerHTML, 'start': startNum, 'end': endNum, 'type': spanClass, 'section': elementID};
+            }else if(this.single_triple.head !== '' && this.single_triple.relation === ''){
+              this.single_triple['relation'] = {'word': spanObj.innerHTML, 'start': startNum, 'end': endNum, 'type': spanClass, 'section': elementID};
+            }else{
+              this.single_triple['tail'] = {'word': spanObj.innerHTML, 'start': startNum, 'end': endNum, 'type': spanClass, 'section': elementID};
+              this.relationChanged = true;
+              this.relTable.push(this.single_triple);
+              this.single_triple = {'head': '', 'relation': '', 'tail': ''};
+            }
+          }
+        }
+      },
+
+      justAdd(){
+        this.relTable.push(this.single_triple);
+        this.single_triple = {'head': '', 'relation': '', 'tail': ''};
+        this.relationChanged = true;
+      },
+
+      deleteRel(index, rows){
+        rows.splice(index, 1);
+        this.relationChanged = true;
+      },
+
+      change_pos(elementClass){
+        let obj = document.getElementsByClassName(elementClass);
+        if(obj.item(0).style.position === 'fixed'){
+          obj.item(0).style.position='static';
+        }else if(obj.item(0).style.position === 'static'){
+          obj.item(0).style.position='fixed';
         }
       },
 
@@ -751,6 +866,12 @@
           this.onlineUsers=msg['num'];
           this.wsTable.unshift({'subject': 'Login', 'info': 'User ' + msg['socket_ID'] + ' login, Total: ' + msg['num']});
         }
+
+        if(info_data['subject'] === 'save_relation' && msg['p_id'] === this.p_id && msg['pos'] <= this.tableData.length){
+          this.tableData[msg['pos']]['Mark_relation'] = msg['relation_list'];
+          this.wsTable.unshift({'subject': 'Remote Info Sync', 'info': this.tableData[msg['pos']]['file_name'] + ' Relation Updated'});
+        }
+
       },
 
       sendMessage(info) {

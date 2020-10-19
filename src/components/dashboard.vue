@@ -1,6 +1,6 @@
 <template>
   <div>
-    <el-card class="box-card" style="width: 45%;">
+    <el-card class="box-card" style="width: 40%;">
       <div slot="header" class="clearfix">
         <h2>Notification</h2>
       </div>

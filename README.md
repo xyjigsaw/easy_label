@@ -13,6 +13,7 @@
 - Parse PDF paper into texts(multithreading)
 - Add new entity class
 - Mark entities in texts
+- Mark relations in texts
 - Support multi-user collaboration
 - Commit to the database asynchronously
 - Recognize potential entities

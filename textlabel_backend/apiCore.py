@@ -135,6 +135,19 @@ async def update_entity_list(
     return {'time': time.time() - start}
 
 
+@router.put('/update_relation_list', response_model=SuccessResponse)
+async def update_relation_list(
+        f_id: str = Form(..., description='file id', example='Name'),
+        relation_list: str = Form(..., description='relation list string type',
+                                example='[{"head": {}, "relation": {}, "tail": {}}]')
+):
+    start = time.time()
+    relation_list = eval(relation_list)
+    info = await async_db.update_relation_list(f_id, relation_list)
+    print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Submit Relation_list Success')
+    return {'time': time.time() - start}
+
+
 @router.put('/change_status', response_model=SuccessResponse)
 async def change_status(
         f_id: str = Form(..., description='file id', example='Name'),

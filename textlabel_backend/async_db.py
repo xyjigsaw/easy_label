@@ -71,8 +71,8 @@ async def update_project(p_id, file_num):
 
 
 async def insert_file(name, path, text, p_id, entity_list, hint):
-    sql = "INSERT INTO file(file_name, file_path, version, entity_list, text, p_id, is_edit, hint) VALUES(%s, %s, %s, %s, %s, %s, %s, %s)"
-    ret = await mysql_select(sql, name, path, 0, json.dumps(entity_list), json.dumps(text), p_id, 0, json.dumps(hint), db='label_sys')
+    sql = "INSERT INTO file(file_name, file_path, version, entity_list, text, p_id, is_edit, hint, Mark_relation) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+    ret = await mysql_select(sql, name, path, 0, json.dumps(entity_list), json.dumps(text), p_id, 0, json.dumps(hint), json.dumps(eval('[]')), db='label_sys')
     return 'success'
 
 
@@ -111,6 +111,12 @@ async def update_entity_list(f_id, entity_list):
     sql2 = "UPDATE file SET version = version + 1 WHERE f_id = %s"
     ret = await mysql_select(sql, json.dumps(entity_list), f_id, db='label_sys')
     ret2 = await mysql_select(sql2, f_id, db='label_sys')
+    return 'success'
+
+
+async def update_relation_list(f_id, relation_list):
+    sql = "UPDATE file SET Mark_relation = %s WHERE f_id = %s"
+    ret = await mysql_select(sql, json.dumps(relation_list), f_id, db='label_sys')
     return 'success'
 
 
