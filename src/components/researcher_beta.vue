@@ -52,6 +52,17 @@
             inactive-text="relation">
           </el-switch>
         </div></el-col>
+
+        <el-col :span="3" style="margin-top: 10px;"><div class="grid-content bg-purple">
+          <el-switch
+            v-model="data_version"
+            ctive-color="#67C23A"
+            inactive-color="#ff4949"
+            active-text="V0"
+            inactive-text="V1"
+            @change="change_version">
+          </el-switch>
+        </div></el-col>
       </el-row>
 
 
@@ -87,7 +98,11 @@
 
 
       <br>
-      <div id="all_info">
+      <div id="all_info"
+           v-loading="loading_detail"
+           element-loading-text="Loading"
+           element-loading-spinner="el-icon-loading"
+           element-loading-background="rgba(0, 0, 0, 0.8)">
         <span id="profile_all"></span>
         <div id="detail_info" @mouseup='selectText' @click='spanEvent'></div>
       </div>
@@ -125,7 +140,7 @@
       </div>
 
     </el-main>
-    <el-aside width="450px" style="height: 1000px;background-color: #FFFFFF; box-shadow: 0 0 5px #dddddd; padding:5px; margin: 5px 5px 5px 0;">
+    <el-aside v-show="!entity_rel" width="450px" style="height: 1000px;background-color: #FFFFFF; box-shadow: 0 0 5px #dddddd; padding:5px; margin: 5px 5px 5px 0;">
         <el-table
           class="tableClass"
           :data="relTable"
@@ -219,6 +234,9 @@ export default {
       relTable: [],
 
       entity_rel: true,
+      data_version: true,
+
+      loading_detail: false,
     }
   },
 
@@ -256,6 +274,7 @@ export default {
   },
   methods: {
     rand_search(){
+      this.loading_detail = true;
       this.search(1);
       this.msg = 'Researcher Edit Mode';
       this.is_edit = true;
@@ -271,7 +290,6 @@ export default {
         this.labelIns.checkList = this.checkList;
         this.labelIns.check_max = this.check_max;
       }
-
     },
     search(is_rand_search) {
       // 由于 main.js 里定义了每个请求前缀，此处的 / 即为 /api/，
@@ -294,12 +312,12 @@ export default {
         affiliation: this.input_affiliation.trim(),
         limit: this.input_limit,
         rand_search: is_rand_search,
+        version: this.data_version ? "0" : "1",
       };
 
       let tagged_data = [];
       this.$axios.post('/api/research_post', url_data).then(response => {
         if (response.data) {
-
           if(this.first_mount){
             //for entity class
             this.entityClass = [];
@@ -340,6 +358,7 @@ export default {
           console.log(this.tableData[0]);
           this.handleCurrentChange(1); //page:0
           //console.log(this.tableData);
+          this.loading_detail = false;
         }
       }).catch(err => {
         this.$message.error('Sorry, not found in database. The Result is empty.');
@@ -473,42 +492,44 @@ export default {
         let url_data={
           e_id: this.current_id,
           res: this.current_data,
+          version: this.data_version,
         };
         this.$axios.post('/api/research_submit', url_data).then(response => {
           if (response.data['message'] === 'success') {
             this.tableData_save[this.currentPage_save - 1] = this.tableData[0];
+            this.$message({
+              message: 'Submit successfully for entity list!',
+              type: 'success'
+            });
           }else{
-            this.$message.error('Submit failed!');
+            this.$message.error('Submit failed for entity list!');
           }
         }).catch(err => {
-          this.$message.error('Submit failed!\n' + err);
+          this.$message.error('Submit failed for entity list!\n' + err);
         });
 
         let url_data2={
           e_id: this.current_id,
           res: {'Relation_list': this.relTable},
+          version: this.data_version,
         };
         this.$axios.post('/api/research_rel_submit', url_data2).then(response => {
           if (response.data['message'] === 'success') {
             this.$message({
-              message: 'Submit successfully!',
+              message: 'Submit successfully for relation list!',
               type: 'success'
             });
             this.cur_rel_ls = {'event': '', 'time': '', 'affiliation': ''};
             this.cur_type_ls = [];
           }else{
-            this.$message.error('Submit failed!');
+            this.$message.error('Submit failed for relation list!');
           }
         }).catch(err => {
-          this.$message.error('Submit failed!\n' + err);
+          this.$message.error('Submit failed for relation list!\n' + err);
         });
         this.exit();
 
       }).catch(() => {
-        this.$message({
-          type: 'info',
-          message: 'Nothing happened!'
-        });
       });
     },
 
@@ -730,7 +751,14 @@ export default {
       this.relTable.push({'event': this.cur_rel_ls['event'], 'time': this.cur_rel_ls['time'], 'affiliation': this.cur_rel_ls['affiliation']});
       this.cur_rel_ls = {'event': '', 'time': '', 'affiliation': ''};
       this.cur_type_ls = [];
-    }
+    },
+
+    change_version(){
+      this.$message({
+        message: 'Change will happen next time.',
+        type: 'warning'
+      });
+    },
 
   }
 }

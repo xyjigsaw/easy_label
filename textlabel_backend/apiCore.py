@@ -406,6 +406,7 @@ class ResearchItem(BaseModel):
     affiliation: str = ''
     limit: int = 10
     rand_search: int = 0
+    version: str = ''
 
 
 @router.post('/research_post')
@@ -415,10 +416,11 @@ async def research_post(request: ResearchItem):
     affiliation = request.affiliation
     limit = request.limit
     rand_search = request.rand_search
+    version = request.version
     if rand_search == 1:
-        api_data = db_rand()
+        api_data = db_rand(version)
     else:
-        api_data = db_search(name, affiliation, limit)
+        api_data = db_search(name, affiliation, limit, version)
     entity_class = db_get_entity_class()
     print('Search: ', 'success', name, affiliation, limit,
           time.strftime('%Y/%m/%d/%H/%M/%S', time.localtime(time.time())))
@@ -428,6 +430,7 @@ async def research_post(request: ResearchItem):
 class SubmitItem(BaseModel):
     e_id: str = ''
     res: dict = {}
+    version: str = ''
 
 
 @router.post('/research_submit')
@@ -436,7 +439,8 @@ async def research_submit(request: SubmitItem):
     try:
         e_id = request.e_id
         res = request.res
-        info = db_update_entity_list(e_id, str(res['Entity_list']))
+        version = request.version
+        info = db_update_entity_list(e_id, str(res['Entity_list']), version)
         print('Submit: ', info, e_id, time.strftime('%Y/%m/%d/%H/%M/%S', time.localtime(time.time())))
         return {"message": info, 'time': time.time() - start, 'data': ''}
     except Exception:
@@ -449,7 +453,8 @@ async def research_rel_submit(request: SubmitItem):
     try:
         e_id = request.e_id
         res = request.res
-        info = db_update_relation_list(e_id, str(res['Relation_list']))
+        version = request.version
+        info = db_update_relation_list(e_id, str(res['Relation_list']), version)
         print('Submit: ', info, e_id, time.strftime('%Y/%m/%d/%H/%M/%S', time.localtime(time.time())))
         return {"message": info, 'time': time.time() - start, 'data': ''}
     except Exception:

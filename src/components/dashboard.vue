@@ -5,16 +5,16 @@
         <h2>Notification</h2>
       </div>
       <div class="text item">
-        <strong>Last  Updated: 20201008</strong><br>
+        <strong>Last  Updated: 20201020</strong><br>
         <h2>New Features</h2>
+        <li>Paper entity and relation marking</li>
+        <li>Researcher entity and relation marking</li>
         <li>Sections can be collapsed.</li>
-        <li>Researcher entity and relation(beta) marking</li>
         <li>Auto Hint</li>
         <li>Auto Mark</li>
         <li>Shortcuts for switching labels</li>
         <h2>TODO</h2>
         <li>Optimize HCI</li>
-        <li>Update Researcher relation(beta)</li>
       </div>
     </el-card>
 
