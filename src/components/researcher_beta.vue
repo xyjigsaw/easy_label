@@ -58,9 +58,18 @@
             v-model="data_version"
             ctive-color="#67C23A"
             inactive-color="#ff4949"
-            active-text="V0"
-            inactive-text="V1"
+            active-text="baike"
+            inactive-text="edu"
             @change="change_version">
+          </el-switch>
+        </div></el-col>
+
+        <el-col :span="3" style="margin-top: 10px;"><div class="grid-content bg-purple">
+          <el-switch
+            v-model="autoMarkSelection"
+            active-color="#13ce66"
+            inactive-color="#dddddd"
+            active-text="AUTO MARK">
           </el-switch>
         </div></el-col>
       </el-row>
@@ -237,6 +246,8 @@ export default {
       data_version: true,
 
       loading_detail: false,
+
+      autoMarkSelection: true,
     }
   },
 
@@ -574,8 +585,39 @@ export default {
               console.log('Selected text: ' + selected);
               let cur_content = this.current_data['origin_content'];
               let entity_str_ls = eval(this.current_data['Entity_list']);
-              entity_str_ls.push({'start': base + start_num,
-                'end': base + end_num, 'word': selected, 'type': this.checkList[0]});
+
+              if(this.autoMarkSelection){
+                if(selected.indexOf(' ') > -1) return;
+                let marginChar = [',', '.', ':', ';', '?', '!', ' ', '(', ')', '>', '<', '"', '*', '%', '-', '_', '\n', '。']
+                let selectedPosList = [];
+                let tmpPos = 0;
+                if(cur_content.indexOf(selected) < selected.length){
+                  selectedPosList.push(cur_content.indexOf(selected));
+                }
+                while(tmpPos > -1){
+                  tmpPos = cur_content.indexOf(selected, tmpPos + selected.length);
+                  selectedPosList.push(tmpPos);
+                }
+                let allStartNum = [];
+                for(let i = 0; i < entity_str_ls.length; i++){
+                  allStartNum.push(entity_str_ls[i]['start']);
+                }
+                for(let i = 0; i < selectedPosList.length - 1; i++){
+                  if(allStartNum.indexOf(selectedPosList[i]) === -1){
+                    //if(marginChar.indexOf(cur_content[selectedPosList[i] - 1]) > -1 && marginChar.indexOf(cur_content[selectedPosList[i] + selected.length]) > -1 ||
+                    //  selectedPosList[i] === 0 && marginChar.indexOf(cur_content[selectedPosList[i] + selected.length]) > -1){
+                    //}
+
+                    if(this.check_entity(entity_str_ls, selectedPosList[i], selectedPosList[i] +selected.length)){
+                      entity_str_ls.push({'start': selectedPosList[i],
+                        'end': selectedPosList[i] + selected.length, 'word': selected, 'type': this.checkList[0]});
+                    }
+                  }
+                }
+              }else{
+                entity_str_ls.push({'start': base + start_num,
+                  'end': base + end_num, 'word': selected, 'type': this.checkList[0]});
+              }
 
               cur_content = this.genContent(entity_str_ls, cur_content);
               this.tableData = [{'Content': cur_content, 'id': this.current_id,
@@ -596,6 +638,17 @@ export default {
 
     },
 
+    check_entity(entity_str_ls, start, end){
+      for(let i = 0; i < entity_str_ls.length; i++){
+        if(entity_str_ls[i]['start'] <= start && start <= entity_str_ls[i]['end'] ||
+          entity_str_ls[i]['start'] <= end && end <= entity_str_ls[i]['end']){
+          //console.log(entity_str_ls[i]['word'], end, entity_str_ls[i]['start'], entity_str_ls[i]['end'])
+          return false;
+        }
+      }
+      return true;
+    },
+
     spanEvent(){
       if(this.is_edit){
         if(this.entity_rel){
@@ -605,7 +658,7 @@ export default {
             let startNum = parseInt(spanObj.getAttribute("data-startNum"));
             let endNum = parseInt(spanObj.getAttribute("data-endNum"));
             console.log('Click Span: ' + spanObj.innerHTML + ' ' + startNum + ' ' + endNum);
-            this.removeEntity(startNum, endNum);
+            this.removeEntity(startNum, endNum, spanObj.innerHTML);
           }
         }else{
           let spanObj=document.elementFromPoint(event.clientX, event.clientY);
@@ -642,12 +695,23 @@ export default {
       }
     },
 
-    removeEntity(startNum, endNum){
+    removeEntity(startNum, endNum, spanWord){
       let cur_content = this.current_data['origin_content'];
       let entity_str_ls = eval(this.current_data['Entity_list']);
       for(let i = entity_str_ls.length-1; i >= 0; i--){
-        if(entity_str_ls[i]['start'] === startNum && entity_str_ls[i]['end'] === endNum){
-          entity_str_ls.splice(i,1);
+        //if(entity_str_ls[i]['start'] === startNum && entity_str_ls[i]['end'] === endNum){
+        //  entity_str_ls.splice(i,1);
+        //}
+
+        if(this.autoMarkSelection){
+          if(entity_str_ls[i]['end'] - entity_str_ls[i]['start'] === endNum - startNum
+            && entity_str_ls[i]['word'] === spanWord){
+            entity_str_ls.splice(i,1);
+          }
+        }else{
+          if(entity_str_ls[i]['start'] === startNum && entity_str_ls[i]['end'] === endNum){
+            entity_str_ls.splice(i,1);
+          }
         }
       }
       cur_content = this.genContent(entity_str_ls, cur_content);

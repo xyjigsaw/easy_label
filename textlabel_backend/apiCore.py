@@ -395,9 +395,9 @@ async def unzip_more(
 #############################################
 
 @router.get("/research_get")
-async def research_get(name: str, affiliation: str, limit: int):
+async def research_get(name: str, affiliation: str, limit: int, version: str):
     start = time.time()
-    api_data = db_search(name, affiliation, limit)
+    api_data = db_search(name, affiliation, limit, version)
     return {"message": "success", 'time': time.time() - start, 'data': api_data}
 
 
