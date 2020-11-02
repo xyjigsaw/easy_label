@@ -226,6 +226,7 @@ export default {
         affiliation: this.input_affiliation.trim(),
         limit: this.input_limit,
         rand_search: is_rand_search,
+        version: "0",
       };
 
       let tagged_data = [];

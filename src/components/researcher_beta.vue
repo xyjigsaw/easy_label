@@ -588,6 +588,7 @@ export default {
 
               if(this.autoMarkSelection){
                 if(selected.indexOf(' ') > -1) return;
+                console.log('start', start_num, ' end: ', end_num)
                 let marginChar = [',', '.', ':', ';', '?', '!', ' ', '(', ')', '>', '<', '"', '*', '%', '-', '_', '\n', '。']
                 let selectedPosList = [];
                 let tmpPos = 0;
@@ -610,6 +611,9 @@ export default {
 
                     if(this.check_entity(entity_str_ls, selectedPosList[i], selectedPosList[i] +selected.length)){
                       entity_str_ls.push({'start': selectedPosList[i],
+                        'end': selectedPosList[i] + selected.length, 'word': selected, 'type': this.checkList[0]});
+                    }else{
+                      console.log({'start': selectedPosList[i],
                         'end': selectedPosList[i] + selected.length, 'word': selected, 'type': this.checkList[0]});
                     }
                   }
@@ -640,8 +644,8 @@ export default {
 
     check_entity(entity_str_ls, start, end){
       for(let i = 0; i < entity_str_ls.length; i++){
-        if(entity_str_ls[i]['start'] <= start && start <= entity_str_ls[i]['end'] ||
-          entity_str_ls[i]['start'] <= end && end <= entity_str_ls[i]['end']){
+        if(entity_str_ls[i]['start'] <= start && start < entity_str_ls[i]['end'] ||
+          entity_str_ls[i]['start'] < end && end <= entity_str_ls[i]['end']){
           //console.log(entity_str_ls[i]['word'], end, entity_str_ls[i]['start'], entity_str_ls[i]['end'])
           return false;
         }
