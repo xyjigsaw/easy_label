@@ -26,7 +26,7 @@ async def get_pool(db):
             port=3306,
             user='root',
             password='123456',
-            db='label_sys',
+            db=db,
             charset='utf8mb4',
             autocommit=True
         )
@@ -124,3 +124,30 @@ async def change_status(f_id, status):
     sql = "UPDATE file SET is_edit = %s WHERE f_id = %s"
     ret = await mysql_select(sql, status, f_id, db='label_sys')
     return 'success'
+
+
+async def get_figure_class():
+    sql = "select * from figure_class"
+    ret = await mysql_select(sql, db='label_sys', cursor_type=DictCursor)
+    return ret
+
+
+async def get_rand_figure():
+    sql = "select * from figure ORDER BY rand() limit 1"
+    ret = await mysql_select(sql, db='label_sys', cursor_type=DictCursor)
+    return ret
+
+
+async def get_figure(figure_id):
+    sql = "select * from figure WHERE figure_id = %s"
+    ret = await mysql_select(sql, figure_id, db='label_sys', cursor_type=DictCursor)
+    return ret
+
+
+async def update_figure_class(figure_id, figure_c):
+    sql = "UPDATE figure SET label = %s WHERE figure_id = %s"
+    sql2 = "UPDATE figure SET version = version + 1 WHERE figure_id = %s"
+    ret = await mysql_select(sql, figure_c, figure_id, db='label_sys')
+    ret2 = await mysql_select(sql2, figure_id, db='label_sys')
+    return 'success'
+

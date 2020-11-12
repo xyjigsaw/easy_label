@@ -11,10 +11,23 @@
           <i class="el-icon-star-off"></i>
           <span slot="title">Home</span>
         </el-menu-item>
-        <el-menu-item index="1" @click="navProject">
-          <i class="el-icon-folder-opened"></i>
-          <span slot="title">Project</span>
-        </el-menu-item>
+
+        <el-submenu index="1">
+          <template slot="title">
+            <i class="el-icon-folder-opened"></i>
+            <span>Project</span>
+          </template>
+          <el-menu-item index="1-1" @click="navProject">
+            <i class="el-icon-folder-opened"></i>
+            <span slot="title">Mark</span>
+          </el-menu-item>
+
+          <el-menu-item index="1-2" @click="navFigure">
+            <i class="el-icon-folder-opened"></i>
+            <span slot="title">Figure</span>
+          </el-menu-item>
+        </el-submenu>
+
         <el-menu-item index="2" @click="navHelp">
           <i class="el-icon-question"></i>
           <span slot="title">Help</span>
@@ -58,6 +71,9 @@
       },
       navProject(){
         this.$router.push("/home/project_manage");
+      },
+      navFigure(){
+        this.$router.push("/home/figures");
       },
       navHelp(){
         this.$router.push("/home/help");

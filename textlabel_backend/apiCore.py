@@ -28,8 +28,9 @@ from urllib import parse
 from toolkit.sequence_tagging import text2entity
 
 from pydantic import BaseModel
-from researcher_db import db_search, db_rand, db_get_entity_class, db_update_entity_list, db_insert_entity_class, \
-    db_update_relation_list
+from external_db import db_search, db_rand, db_get_entity_class, db_update_entity_list, db_insert_entity_class, \
+    db_update_relation_list, dqa_search_paper
+
 
 app = FastAPI(routes=routes)
 router = APIRouter()
@@ -397,7 +398,7 @@ async def unzip_more(
 @router.get("/research_get")
 async def research_get(name: str, affiliation: str, limit: int, version: str):
     start = time.time()
-    api_data = db_search(name, affiliation, limit, version)
+    api_data = await db_search(name, affiliation, limit, version)
     return {"message": "success", 'time': time.time() - start, 'data': api_data}
 
 
@@ -418,10 +419,10 @@ async def research_post(request: ResearchItem):
     rand_search = request.rand_search
     version = request.version
     if rand_search == 1:
-        api_data = db_rand(version)
+        api_data = await db_rand(version)
     else:
-        api_data = db_search(name, affiliation, limit, version)
-    entity_class = db_get_entity_class()
+        api_data = await db_search(name, affiliation, limit, version)
+    entity_class = await db_get_entity_class()
     print('Search: ', 'success', name, affiliation, limit,
           time.strftime('%Y/%m/%d/%H/%M/%S', time.localtime(time.time())))
     return {"message": "success", 'time': time.time() - start, 'data': api_data, 'entity_class': entity_class}
@@ -440,7 +441,7 @@ async def research_submit(request: SubmitItem):
         e_id = request.e_id
         res = request.res
         version = request.version
-        info = db_update_entity_list(e_id, str(res['Entity_list']), version)
+        info = await db_update_entity_list(e_id, str(res['Entity_list']), version)
         print('Submit: ', info, e_id, time.strftime('%Y/%m/%d/%H/%M/%S', time.localtime(time.time())))
         return {"message": info, 'time': time.time() - start, 'data': ''}
     except Exception:
@@ -454,7 +455,7 @@ async def research_rel_submit(request: SubmitItem):
         e_id = request.e_id
         res = request.res
         version = request.version
-        info = db_update_relation_list(e_id, str(res['Relation_list']), version)
+        info = await db_update_relation_list(e_id, str(res['Relation_list']), version)
         print('Submit: ', info, e_id, time.strftime('%Y/%m/%d/%H/%M/%S', time.localtime(time.time())))
         return {"message": info, 'time': time.time() - start, 'data': ''}
     except Exception:
@@ -472,12 +473,69 @@ async def research_class_submit(request: ClassItem):
     try:
         addLabelName = request.addLabelName
         addLabelColor = request.addLabelColor
-        info = db_insert_entity_class(addLabelName, addLabelColor)
+        info = await db_insert_entity_class(addLabelName, addLabelColor)
         print('Submit Label: ', info, addLabelName, addLabelColor,
               time.strftime('%Y/%m/%d/%H/%M/%S', time.localtime(time.time())))
         return {"message": info, 'time': time.time() - start, 'data': ''}
     except Exception:
         return {"message": "error", 'time': time.time() - start, 'data': ''}
+
+
+#############################################
+# Figure
+#############################################
+
+@router.get('/fetch_figure_class', response_model=GetResponse)
+async def fetch_figure_class():
+    start = time.time()
+    api_data = await async_db.get_figure_class()
+    print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Fetch figure_class Success')
+    return {'time': time.time() - start, 'data': api_data}
+
+
+@router.get('/fetch_figure', response_model=GetResponse)
+async def fetch_figure(
+        figure_id: str = Query(..., description='figure id', example='4beb867cdeba4f259d9202f5bc58a47c')
+):
+    start = time.time()
+    api_data = await async_db.get_figure(figure_id)
+    print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Fetch figure Success')
+    return {'time': time.time() - start, 'data': api_data}
+
+
+@router.get('/fetch_rand_figure', response_model=GetResponse)
+async def fetch_rand_figure():
+    start = time.time()
+    api_data = await async_db.get_rand_figure()
+    print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Fetch rand figure Success')
+    return {'time': time.time() - start, 'data': api_data}
+
+
+@router.put('/update_figure_class', response_model=SuccessResponse)
+async def update_figure_class(
+        figure_id: str = Form(..., description='figure id', example='4beb867cdeba4f259d9202f5bc58a47c'),
+        figure_class: str = Form(..., description='figure class', example='research')
+):
+    start = time.time()
+    info = await async_db.update_figure_class(figure_id, figure_class)
+    print(figure_id, figure_class)
+    print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Update figure class Success')
+    return {'time': time.time() - start}
+
+
+#############################################
+# Figure
+#############################################
+
+@router.get('/fetch_dqa_paper', response_model=GetResponse)
+async def fetch_dqa_paper(
+        paper_id: str = Query(..., description='paper id', example='4beb867cdeba4f259d9202f5bc58a47c')
+):
+    start = time.time()
+    api_data = await dqa_search_paper(paper_id)
+    print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Fetch dqa paper Success')
+    return {'time': time.time() - start, 'data': api_data}
+
 
 
 #############################################

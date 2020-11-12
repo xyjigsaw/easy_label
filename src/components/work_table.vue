@@ -109,13 +109,26 @@
           <el-row style="background-color: #FFFFFF;border: 1px solid #dddddd; border-bottom: 0">
             <el-button type="text">TRIPLES</el-button>
             <el-button icon="el-icon-rank" @click="change_pos('relation_table')" style="padding: 10px; margin: 10px;" v-show="!this.markMode"></el-button>
-            <el-button type="primary" round @click="justAdd">Add</el-button>
+            <el-row>
+              <el-switch
+                v-model="auto_rel"
+                active-color="#13ce66"
+                inactive-text="AUTO Relation"
+              >
+              </el-switch>
+              <el-button type="primary" round @click="justAdd">Add</el-button>
+            </el-row>
+
+
             <div class="relation_board" v-show="!markMode" style="background-color:#FFFFFF;padding: 8px;margin: 0px 5px;position: static;">
               <el-row>
                 <el-button type="info" size="medium" plain style="width: 100%">Head: {{ this.single_triple['head']['word']}}</el-button>
               </el-row>
-              <el-row>
-                <el-button type="info" size="medium" plain style="width: 100%">Relation: {{ this.single_triple['relation']['word']}}</el-button>
+              <el-row v-show="!auto_rel">
+                <el-button  type="info" size="medium" plain style="width: 100%">Relation: {{ this.single_triple['relation']['word']}}</el-button>
+              </el-row>
+              <el-row v-show="auto_rel">
+                <el-button v-show="auto_rel" type="info" size="medium" plain style="width: 100%">Relation: AUTO</el-button>
               </el-row>
               <el-row>
                 <el-button type="info" size="medium" plain style="width: 100%">Tail: {{ this.single_triple['tail']['word']}}</el-button>
@@ -249,6 +262,7 @@
         markMode: true,
         single_triple: {'head': '', 'relation': '', 'tail': ''},
         relTable: [],
+        auto_rel: true,
 
         autoMarkSelection: true,
         autoHint: true,
@@ -788,17 +802,32 @@
           let startNum = parseInt(spanObj.getAttribute("data-startNum"));
           let endNum = parseInt(spanObj.getAttribute("data-endNum"));
           if(!isNaN(startNum) && spanClass !== 'auto-hint'){
-            console.log('Click Span: ' + spanObj.innerHTML + ' ' + startNum + ' ' + endNum + ' ' + spanClass);
-            if(this.single_triple.head === ''){
-              this.single_triple['head'] = {'word': spanObj.innerHTML, 'start': startNum, 'end': endNum, 'type': spanClass, 'section': elementID};
-            }else if(this.single_triple.head !== '' && this.single_triple.relation === ''){
-              this.single_triple['relation'] = {'word': spanObj.innerHTML, 'start': startNum, 'end': endNum, 'type': spanClass, 'section': elementID};
+            if(!this.auto_rel){
+              console.log('Click Span: ' + spanObj.innerHTML + ' ' + startNum + ' ' + endNum + ' ' + spanClass);
+              if(this.single_triple.head === ''){
+                this.single_triple['head'] = {'word': spanObj.innerHTML, 'start': startNum, 'end': endNum, 'type': spanClass, 'section': elementID};
+              }else if(this.single_triple.head !== '' && this.single_triple.relation === ''){
+                this.single_triple['relation'] = {'word': spanObj.innerHTML, 'start': startNum, 'end': endNum, 'type': spanClass, 'section': elementID};
+              }else{
+                this.single_triple['tail'] = {'word': spanObj.innerHTML, 'start': startNum, 'end': endNum, 'type': spanClass, 'section': elementID};
+                this.relationChanged = true;
+                this.relTable.push(this.single_triple);
+                this.single_triple = {'head': '', 'relation': '', 'tail': ''};
+              }
             }else{
-              this.single_triple['tail'] = {'word': spanObj.innerHTML, 'start': startNum, 'end': endNum, 'type': spanClass, 'section': elementID};
-              this.relationChanged = true;
-              this.relTable.push(this.single_triple);
-              this.single_triple = {'head': '', 'relation': '', 'tail': ''};
+              //auto rel
+              console.log('Click Span: ' + spanObj.innerHTML + ' ' + startNum + ' ' + endNum + ' ' + spanClass);
+              if(this.single_triple.head === ''){
+                this.single_triple['head'] = {'word': spanObj.innerHTML, 'start': startNum, 'end': endNum, 'type': spanClass, 'section': elementID};
+              }else if(this.single_triple.head !== '' && this.single_triple.relation === ''){
+                this.single_triple['relation'] = {'word': spanClass, 'start': -1, 'end': -1, 'type': spanClass, 'section': elementID};
+                this.single_triple['tail'] = {'word': spanObj.innerHTML, 'start': startNum, 'end': endNum, 'type': spanClass, 'section': elementID};
+                this.relationChanged = true;
+                this.relTable.push(this.single_triple);
+                this.single_triple = {'head': '', 'relation': '', 'tail': ''};
+              }
             }
+
           }
         }
       },
