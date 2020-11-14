@@ -26,6 +26,10 @@
             <i class="el-icon-folder-opened"></i>
             <span slot="title">Figure</span>
           </el-menu-item>
+          <el-menu-item index="1-3" @click="navQANER">
+            <i class="el-icon-folder-opened"></i>
+            <span slot="title">QA_NER</span>
+          </el-menu-item>
         </el-submenu>
 
         <el-menu-item index="2" @click="navHelp">
@@ -79,10 +83,13 @@
         this.$router.push("/home/help");
       },
       navResearcher(){
-        this.$router.push("/home/researcher");
+        this.$router.push("/home/researcher_beta");
       },
       navDashboard(){
         this.$router.push("/home/dashboard");
+      },
+      navQANER(){
+        this.$router.push("/home/qa_ner");
       }
     }
   };

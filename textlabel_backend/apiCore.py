@@ -29,7 +29,7 @@ from toolkit.sequence_tagging import text2entity
 
 from pydantic import BaseModel
 from external_db import db_search, db_rand, db_get_entity_class, db_update_entity_list, db_insert_entity_class, \
-    db_update_relation_list, dqa_search_paper
+    db_update_relation_list, dqa_search_paper, dqa_all_paper_id, update_dde_mark
 
 
 app = FastAPI(routes=routes)
@@ -524,7 +524,7 @@ async def update_figure_class(
 
 
 #############################################
-# Figure
+# dqa
 #############################################
 
 @router.get('/fetch_dqa_paper', response_model=GetResponse)
@@ -535,6 +535,25 @@ async def fetch_dqa_paper(
     api_data = await dqa_search_paper(paper_id)
     print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Fetch dqa paper Success')
     return {'time': time.time() - start, 'data': api_data}
+
+
+@router.get('/fetch_all_paper_id', response_model=GetResponse)
+async def fetch_all_paper_id():
+    start = time.time()
+    api_data = await dqa_all_paper_id()
+    print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Fetch all paper id Success')
+    return {'time': time.time() - start, 'data': api_data}
+
+
+@router.put('/update_dqa_mark', response_model=SuccessResponse)
+async def update_dqa_mark(
+        dpaqn_id: str = Form(..., description='dpaqn id', example='4beb867cdeba4f259d9202f5bc58a47c'),
+        mark: str = Form(..., description='mark value', example='1')
+):
+    start = time.time()
+    info = await update_dde_mark(dpaqn_id, mark)
+    print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Update DDE mark Success')
+    return {'time': time.time() - start}
 
 
 
