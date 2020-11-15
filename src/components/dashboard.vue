@@ -28,8 +28,7 @@
         <el-button type="primary" @click="navFigure">Figures</el-button>
         <el-button type="primary" @click="navqa_NER">QA_NER</el-button>
         <br><br>
-        <el-button type="success" @click="navREntity">Researcher Entity</el-button>
-        <el-button type="success" @click="navRRelation">Researcher Relation</el-button>
+        <el-button type="success" @click="navResearcher">Researcher</el-button>
         <br><br>
         <el-button type="info" @click="navHelp">Help</el-button>
         <el-button type="warning" disabled>Feedback</el-button>
@@ -55,11 +54,8 @@ name: "dashborad",
     navHelp(){
       this.$router.push("/home/help");
     },
-    navREntity(){
-      this.$router.push("/home/researcher_entity");
-    },
-    navRRelation(){
-      this.$router.push("/home/researcher_relation");
+    navResearcher(){
+      this.$router.push("/home/researcher_beta");
     },
 
     navFigure(){

@@ -38,7 +38,7 @@
           <el-button type="success" icon="el-icon-check" circle @click="save"></el-button>
           <p style="font-size: 8px; color: #67C23A; text-align: center">Save</p>
         </div></el-col>
-        <el-col :span="2" v-if="showTable && is_edit === true"><div class="grid-content bg-purple">
+        <el-col :span="2" v-if="showTable && is_edit !== true"><div class="grid-content bg-purple">
           <el-button type="info" icon="el-icon-right" circle @click="exit"></el-button>
           <p style="font-size: 8px; color: #909399; text-align: center">Exit</p>
         </div></el-col>
@@ -420,7 +420,6 @@ export default {
       document.getElementById("detail_info").innerHTML="<div style=\"box-shadow: 0 0 2px #b1b1b1; margin: 10px; padding:20px; border-radius: 5px; " +
         "line-height: 30px;\">" + this.tableData[this.currentPage - 1]['Content'] + "</div>";
       this.click_check();
-
     },
 
     click_check(){
@@ -503,7 +502,7 @@ export default {
         let url_data={
           e_id: this.current_id,
           res: this.current_data,
-          version: this.data_version,
+          version: this.data_version ? "0" : "1",
         };
         this.$axios.post('/api/research_submit', url_data).then(response => {
           if (response.data['message'] === 'success') {
@@ -522,7 +521,7 @@ export default {
         let url_data2={
           e_id: this.current_id,
           res: {'Relation_list': this.relTable},
-          version: this.data_version,
+          version: this.data_version ? "0" : "1",
         };
         this.$axios.post('/api/research_rel_submit', url_data2).then(response => {
           if (response.data['message'] === 'success') {

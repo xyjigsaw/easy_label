@@ -7,9 +7,6 @@ import work_table from "@/components/work_table";
 import help from "@/components/help";
 import dashboard from "@/components/dashboard";
 import external_page from "@/components/external_page";
-import researcher from "@/components/researcher";
-import researcher_entity from "@/components/researcher_entity";
-import researcher_relation from "@/components/researcher_relation";
 import researcher_beta from "@/components/researcher_beta";
 import figures from "@/components/figures";
 import qa_ner from "@/components/qa_ner";
@@ -32,10 +29,7 @@ export default new Router({
         {path: 'project_manage', name: 'project_manage', component: project_manage},
         {path: 'help', name: 'help', component: help},
         {path: 'dashboard', name: 'dashboard', component: dashboard},
-        {path: 'researcher', name: 'researcher', component: researcher},
         {path: 'researcher_beta', name: 'researcher_beta', component: researcher_beta},
-        {path: 'researcher_relation', name: 'researcher_relation', component: researcher_relation},
-        {path: 'researcher_entity', name: 'researcher_entity', component: researcher_entity},
         {path: 'external_page', name: 'external_page', component: external_page},
         {path: 'figures', name: 'figures', component: figures, meta: {img_port: 'http://10.10.2.85:8000/get_file/'}},
         {path: 'qa_ner', name: 'qa_ner', component: qa_ner},
