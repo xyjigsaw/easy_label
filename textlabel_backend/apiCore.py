@@ -529,7 +529,7 @@ async def update_figure_class(
 
 @router.get('/fetch_dqa_paper', response_model=GetResponse)
 async def fetch_dqa_paper(
-        paper_id: str = Query(..., description='paper id', example='4beb867cdeba4f259d9202f5bc58a47c')
+        paper_id: str = Query(..., description='paper id', example='448724959')
 ):
     start = time.time()
     api_data = await dqa_search_paper(paper_id)
@@ -547,7 +547,7 @@ async def fetch_all_paper_id():
 
 @router.put('/update_dqa_mark', response_model=SuccessResponse)
 async def update_dqa_mark(
-        dpaqn_id: str = Form(..., description='dpaqn id', example='4beb867cdeba4f259d9202f5bc58a47c'),
+        dpaqn_id: str = Form(..., description='dpaqn id', example='448724959'),
         mark: str = Form(..., description='mark value', example='1')
 ):
     start = time.time()

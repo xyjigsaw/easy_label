@@ -19,11 +19,11 @@
       <div class="tables">
         <el-table
           :data="tableData.filter(data => !tableSearch || data.res_entity.toLowerCase().includes(tableSearch.toLowerCase()))"
+          :row-class-name="tableRowClassName"
           v-loading="loading_detail"
           element-loading-text="Loading"
           element-loading-spinner="el-icon-loading"
           element-loading-background="rgba(0, 0, 0, 0.8)">
-          style="width: 100%">
           <el-table-column
             prop="paper_id"
             label="paper_id"
@@ -50,7 +50,7 @@
             sortable>
           </el-table-column>
 
-          <el-table-column label="operation" width="300">
+          <el-table-column label="operation" width="250">
             <template slot="header" slot-scope="scope">
               <el-input
                 v-model="tableSearch"
@@ -58,17 +58,22 @@
                 placeholder="Search By Entity id"/>
             </template>
             <template slot-scope="scope">
-              <el-row :gutter="12">
-                <el-col :span="15">
-                  <el-input v-model="scope.row['mark']"></el-input>
+              <el-row :gutter="10">
+                <el-col :span="5">
+                  <el-button
+                    size="small"
+                    type="danger"
+                    icon="el-icon-close"
+                    plain
+                    @click="handleRow(scope.$index, scope.row, '0')"></el-button>
                 </el-col>
-                <el-col :span="1">
+                <el-col :span="5">
                   <el-button
                     size="small"
                     type="success"
                     icon="el-icon-check"
                     plain
-                    @click="handleRow(scope.$index, scope.row)">Save</el-button>
+                    @click="handleRow(scope.$index, scope.row, '1')"></el-button>
                 </el-col>
               </el-row>
             </template>
@@ -157,7 +162,8 @@ export default {
       });
     },
 
-    handleRow(index, row){
+    handleRow(index, row, flag){
+      row['mark'] = flag
       console.log(row);
       let url_data = new FormData();
       url_data.append('dpaqn_id', row['dpaqn_id']);
@@ -167,6 +173,16 @@ export default {
       }).catch(err => {
         this.$notify.error({title: 'Error', message: err});
       });
+    },
+
+    tableRowClassName({row, rowIndex}) {
+      console.log(row)
+      if (row['mark'] === "0") {
+        return 'warning-row';
+      } else if (row['mark'] === "1") {
+        return 'success-row';
+      }
+      return 'null-row';
     },
 
 
@@ -188,6 +204,16 @@ export default {
 }
 </script>
 
-<style scoped>
+<style>
+.el-table .warning-row {
+  background: #fde6f4;
+}
 
+.el-table .success-row {
+  background: #f0f9eb;
+}
+
+.el-table .null-row {
+  background: #ffffff;
+}
 </style>
