@@ -111,6 +111,9 @@ async def update_entity_list(f_id, entity_list):
     sql2 = "UPDATE file SET version = version + 1 WHERE f_id = %s"
     ret = await mysql_select(sql, json.dumps(entity_list), f_id, db='label_sys')
     ret2 = await mysql_select(sql2, f_id, db='label_sys')
+
+    sql_log = "INSERT INTO project_history(f_id, p_id, version, entity_list, Mark_relation) select f_id, p_id, version, entity_list, Mark_relation from file where f_id = %s"
+    ret_log = await mysql_select(sql_log, f_id, db='label_sys')
     return 'success'
 
 
