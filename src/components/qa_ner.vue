@@ -21,6 +21,7 @@
           :data="tableData.filter(data => !tableSearch || data.res_entity.toLowerCase().includes(tableSearch.toLowerCase()))"
           :row-class-name="tableRowClassName"
           v-loading="loading_detail"
+          :row-style="{height:'20px'}"
           element-loading-text="Loading"
           element-loading-spinner="el-icon-loading"
           element-loading-background="rgba(0, 0, 0, 0.8)">
@@ -37,7 +38,7 @@
           <el-table-column
             prop="origin_res"
             label="origin_res"
-            width="480">
+            width="400">
           </el-table-column>
           <el-table-column
             prop="res_entity"
@@ -49,8 +50,13 @@
             label="entity_name"
             sortable>
           </el-table-column>
-
-          <el-table-column label="operation" width="250">
+          <el-table-column
+            prop="entity_description"
+            label="entity_description"
+            :show-tooltip-when-overflow="true"
+            sortable>
+          </el-table-column>
+          <el-table-column label="operation" width="230">
             <template slot="header" slot-scope="scope">
               <el-input
                 v-model="tableSearch"

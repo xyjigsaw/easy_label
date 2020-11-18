@@ -52,12 +52,14 @@
           font-weight: bolder; line-height: 20px; font-size: 20px; color: #2c3e50; border-radius: 5px;"></span>
         </el-col>
       </el-row>
-      <el-row>
-        <el-image :src="img_path" lazy style="padding: 5px;margin: 10px;"></el-image>
-      </el-row>
+      <br>
       <el-row>
         <span id="caption" style="padding: 10px; font-weight: bolder; line-height: 30px; font-size: 25px; color: #2c3e50;"></span>
       </el-row>
+      <el-row>
+        <el-image :src="img_path" lazy style="padding: 5px;margin: 10px;"></el-image>
+      </el-row>
+
     </div>
   </div>
 </template>
