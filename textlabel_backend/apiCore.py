@@ -523,6 +523,16 @@ async def update_figure_class(
     return {'time': time.time() - start}
 
 
+@router.post('/add_figure_class', response_model=SuccessResponse)
+async def add_figure_class(
+        addLabelName: str = Form(..., description='label name', example='Name'),
+        addLabelColor: str = Form(..., description='label color', example='#00CCFF'),
+):
+    start = time.time()
+    info = await async_db.insert_figure_class(addLabelName, addLabelColor)
+    print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Add Entity_class Success')
+    return {'time': time.time() - start}
+
 #############################################
 # dqa
 #############################################

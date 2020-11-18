@@ -1,25 +1,45 @@
 <template>
   <div>
+    <el-dialog title="Add Class Label" :visible.sync="addLabelVisible" width="30%">
+      <el-form>
+        <el-form-item label="Input Class Name">
+          <el-input v-model="addLabelName" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="Choose Color">
+          <el-color-picker v-model="addLabelColor"></el-color-picker>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="addLabelVisible = false">Cancel</el-button>
+        <el-button type="primary" @click="addClassLabel">Submit</el-button>
+      </div>
+    </el-dialog>
+
+
     <div class="buttons" style="width: 50%; text-align: center; margin: auto">
     <el-row style="margin: 10px;">
-      <el-col :span="3">
+      <el-col :span="2">
         <el-button type="danger" icon="el-icon-back" circle @click="back2home"></el-button>
         <p style="font-size: 8px; color: #F56C6C; text-align: center; margin: 0;">Exit</p>
       </el-col>
-      <el-col :span="3">
+      <el-col :span="2">
         <el-button type="info" icon="el-icon-question" circle @click="showHelp"></el-button>
         <p style="font-size: 8px; color: #909399; text-align: center; margin: 0;">Help</p>
       </el-col>
 
-      <el-col :span="5">
+      <el-col :span="4">
         <el-button type="primary" @click="query_img(pre_figure_id)">Back</el-button>
       </el-col>
 
-      <el-col :span="5">
+      <el-col :span="4">
+        <el-button type="info" icon="el-icon-plus" @click="addLabelVisible = true">Class</el-button>
+      </el-col>
+
+      <el-col :span="4">
         <el-button type="success" icon="el-icon-check" @click="save">Save</el-button>
       </el-col>
 
-      <el-col :span="5">
+      <el-col :span="4">
         <el-button type="warning" @click="get_img">Random</el-button>
       </el-col>
 
@@ -80,6 +100,10 @@ export default {
       checkList: [],
       check_max: 1,
       auto_next: false,
+
+      addLabelVisible: false,
+      addLabelName: '',
+      addLabelColor: '',
     }
   },
   created() {
@@ -304,6 +328,45 @@ export default {
           'shift + s: save changes</br>' +
           'shift + q: leave</br>' + class_shortcuts
       });
+    },
+
+    addClassLabel(){
+      this.addLabelName = this.addLabelName.trim();
+      this.addLabelName = this.addLabelName.toLowerCase();
+      this.addLabelName = this.addLabelName.charAt(0).toUpperCase() + this.addLabelName.slice(1);
+      this.addLabelColor = this.addLabelColor.toUpperCase();
+      if(this.addLabelName === '' || this.addLabelColor === null || this.addLabelColor === ''){
+        this.$notify({
+          title: 'Warning',
+          message: 'Input is empty.',
+          type: 'warning'
+        });
+      }else if(this.addLabelName.length > 10) {
+        this.$notify({
+          title: 'Warning',
+          message: 'Too Long',
+          type: 'warning'
+        });
+      }else if(this.classNameList.indexOf(this.addLabelName) > -1 || this.classColorList.indexOf(this.addLabelColor) > -1){
+        this.$notify({
+          title: 'Warning',
+          message: 'Class or color has existed!',
+          type: 'warning'
+        });
+      }else{
+        let url_data = new FormData();
+        url_data.append('addLabelName', this.addLabelName);
+        url_data.append('addLabelColor', this.addLabelColor);
+        this.$axios.post('/api/add_figure_class', url_data).then(response => {
+          this.$notify({title: 'Success', message: 'Added successfully', type: 'success'});
+          this.$router.push("/home/figures");
+        }).catch(err => {
+          this.$notify.error({title: 'Error', message: err});
+        });
+        this.addLabelVisible = false;
+        this.addLabelName = '';
+        this.addLabelColor = '';
+      }
     },
 
   },

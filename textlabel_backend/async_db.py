@@ -154,3 +154,9 @@ async def update_figure_class(figure_id, figure_c):
     ret2 = await mysql_select(sql2, figure_id, db='label_sys')
     return 'success'
 
+
+async def insert_figure_class(label, color):
+    sql = "INSERT INTO figure_class(label, color) VALUES(%s, %s)"
+    ret = await mysql_select(sql, label, color, db='label_sys')
+    return 'success'
+
