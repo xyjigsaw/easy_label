@@ -524,17 +524,23 @@
           }
           if(type.indexOf('auto-hint') > -1){
             let hint_color = '#9e9e9e';
-            if(type.indexOf('lithology') > -1){
-                hint_color = '#8fff8e';
-            }else if(type.indexOf('period') > -1) {
-              hint_color = '#ff9474';
-            }else if(type.indexOf('location') > -1) {
-              hint_color = '#be74ff';
-            }else if(type.indexOf('word') > -1) {
-              hint_color = '#5fe2ff';
+            if(this.classNameList.indexOf(type.slice(type.lastIndexOf('-') + 1)) > -1){
+              let color_pos = this.classNameList.indexOf(type.slice(type.lastIndexOf('-') + 1));
+              hint_color = this.classColorList[color_pos];
             }else{
-              hint_color = '#9e9e9e';
+              if(type.indexOf('ithology') > -1){
+                hint_color = '#8fff8e';
+              }else if(type.indexOf('eriod') > -1) {
+                hint_color = '#ff9474';
+              }else if(type.indexOf('ocation') > -1) {
+                hint_color = '#be74ff';
+              }else if(type.indexOf('word') > -1) {
+                hint_color = '#5fe2ff';
+              }else{
+                hint_color = '#9e9e9e';
+              }
             }
+
             cur_content = cur_content.substring(0, startNum) + '<span class="auto-hint" style="cursor:' + 'pointer'+
               '; border-bottom:2px solid ' + hint_color + '; " data-startNum="' + startNum + '" data-endNum="' + endNum + '" data-word="' + word + '">'
               + cur_content.substring(startNum, endNum) + '</span>' + cur_content.substring(endNum);
