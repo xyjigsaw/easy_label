@@ -64,7 +64,7 @@
       };
     },
     created() {
-      this.$router.push("/home/dashboard");
+      //this.$router.push("/home/dashboard");
     },
     methods: {
       handleOpen(key, keyPath) {
