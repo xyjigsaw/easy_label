@@ -59,8 +59,8 @@ async def delete_project(p_id):
 
 async def insert_project(p_id, path, name, total):
     time_str = time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time()))
-    sql = "INSERT INTO project(p_id, path, name, time, total) VALUES(%s, %s, %s, %s, %s)"
-    ret = await mysql_select(sql, p_id, path, name, time_str, total, db='label_sys')
+    sql = "INSERT INTO project(p_id, path, name, time, total, parse_done) VALUES(%s, %s, %s, %s, %s, %s)"
+    ret = await mysql_select(sql, p_id, path, name, time_str, total, '0', db='label_sys')
     return 'success'
 
 
@@ -160,3 +160,10 @@ async def insert_figure_class(label, color):
     ret = await mysql_select(sql, label, color, db='label_sys')
     return 'success'
 
+
+async def parsing_status(p_id, status, file_num):
+    sql = "UPDATE project SET parse_done = %s WHERE p_id = %s"
+    ret = await mysql_select(sql, status, p_id, db='label_sys')
+    sql2 = "UPDATE project SET total = %s WHERE p_id = %s"
+    ret2 = await mysql_select(sql2, file_num, p_id, db='label_sys')
+    return 'success'

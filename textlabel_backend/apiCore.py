@@ -7,7 +7,7 @@
 
 import uvicorn
 import traceback
-from fastapi import FastAPI, Query, Form, APIRouter, File, UploadFile, Request, Response
+from fastapi import FastAPI, Query, Form, APIRouter, File, UploadFile, Request, Response, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import FileResponse
 import threading
@@ -16,11 +16,9 @@ import os
 import uuid
 import shutil
 import base64
+import asyncio
 
 import async_db
-from toolkit.pdf_parser import Parser
-from readXML import PaperXML
-from readXML_grobid import PaperXMLGrobid
 from wsCore import users, routes
 from model import *
 
@@ -31,10 +29,16 @@ from pydantic import BaseModel
 from external_db import db_search, db_rand, db_get_entity_class, db_update_entity_list, db_insert_entity_class, \
     db_update_relation_list, dqa_search_paper, dqa_all_paper_id, update_dde_mark
 
+import pdf_analysis
 
 app = FastAPI(routes=routes)
 router = APIRouter()
 os.makedirs('upload', exist_ok=True)
+
+
+def start_loop(loop):
+    asyncio.set_event_loop(loop)
+    loop.run_forever()
 
 
 #############################################
@@ -45,6 +49,28 @@ os.makedirs('upload', exist_ok=True)
 @router.get('/fetch_project', response_model=GetResponse)
 async def fetch_project():
     start = time.time()
+    if pdf_analysis.parse_done:
+        try:
+            file_num = 0
+            print(pdf_analysis.output_texts_ls)
+            for item in pdf_analysis.output_texts_ls:
+                try:
+
+                    await async_db.insert_file(item['name'], item['path'], item['texts'], pdf_analysis.p_id,
+                                               item['entity_list'], item['hint'])
+                    file_num += 1
+                except Exception as e:
+                    print(e)
+                    pass
+            await async_db.parsing_status(pdf_analysis.p_id, '1', file_num)
+            print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Unzip Success')
+        except Exception as e:
+            print(e)
+            print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Unzip Error')
+        pdf_analysis.parse_done = False
+        pdf_analysis.output_texts_ls = []
+        pdf_analysis.apn = ''
+        pdf_analysis.p_id = ''
     api_data = await async_db.get_project()
     print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Fetch Project Success')
     return {'time': time.time() - start, 'data': api_data}
@@ -140,7 +166,7 @@ async def update_entity_list(
 async def update_relation_list(
         f_id: str = Form(..., description='file id', example='Name'),
         relation_list: str = Form(..., description='relation list string type',
-                                example='[{"head": {}, "relation": {}, "tail": {}}]')
+                                  example='[{"head": {}, "relation": {}, "tail": {}}]')
 ):
     start = time.time()
     relation_list = eval(relation_list)
@@ -184,7 +210,7 @@ async def heart_beat(
 
 
 #############################################
-# Upload
+# Upload Download Unzip Parse
 #############################################
 
 
@@ -198,98 +224,6 @@ async def file_upload(file: UploadFile = File(..., description='ZIP file to uplo
     return {'time': time.time() - start, 'filepath': file.filename}
 
 
-def findAllFile(base):
-    for root, ds, fs in os.walk(base):
-        for f in fs:
-            if f.endswith('.pdf'):
-                fullname = os.path.join(root, f)
-                yield fullname
-
-
-class HintThread(threading.Thread):
-    def __init__(self, text):
-        threading.Thread.__init__(self)
-        self.text = text
-        self.hintList = None
-
-    def run(self):
-        try:
-            self.hintList = text2entity.abstract2entity(self.text)
-        except:
-            pass
-
-    def getResult(self):
-        if self.hintList is not None:
-            return self.hintList
-
-
-class ParseThread(threading.Thread):
-    def __init__(self, tmpName, addProjectName, sectionList):
-        threading.Thread.__init__(self)
-        self.parser = Parser('grobid')
-        self.tmpName = tmpName
-        self.addProjectName = addProjectName
-        self.sectionList = sectionList
-        self.output_texts = None
-
-    def run(self):
-        print('Start Parsing ' + self.tmpName)
-        try:
-            self.parser.parse('text', self.tmpName, 'upload/' + self.addProjectName + '/parse', 50)
-            paper = PaperXMLGrobid(
-                'upload/' + self.addProjectName + '/parse/' + self.tmpName[
-                                                              self.tmpName.rfind('/') + 1:-3] + 'grobid.xml')
-            '''
-            self.output_texts = {'texts': {'text_detail_0': paper.get_paper_abstract(),
-                                           'text_detail_1': paper.get_paper_introduction(),
-                                           'text_detail_2': paper.get_paper_conclusion()},
-                                 'name': self.tmpName[self.tmpName.rfind('/') + 1:-4],
-                                 'path': self.tmpName}
-            '''
-            if 'others' in self.sectionList:
-
-                self.output_texts = {'texts': {},
-                                     'name': self.tmpName[self.tmpName.rfind('/') + 1:-4],
-                                     'path': self.tmpName,
-                                     'entity_list': {},
-                                     'hint': {}
-                                     }
-                section_texts = paper.get_paper_sections()
-                hint_thread_pool = []
-                text_prefix = 'text_detail_'
-                for i in range(len(section_texts)):
-                    self.output_texts['texts'][text_prefix + str(i)] = section_texts[i]
-                    self.output_texts['entity_list'][text_prefix + str(i)] = []
-                    # self.output_texts['hint'][text_prefix + str(i)] = text2entity.abstract2entity(section_texts[i])
-                    hint_thread_pool.append(HintThread(section_texts[i]))
-                for th in hint_thread_pool:
-                    th.start()
-                for i in range(len(hint_thread_pool)):
-                    hint_thread_pool[i].join()
-                    self.output_texts['hint'][text_prefix + str(i)] = (hint_thread_pool[i].getResult())
-
-            else:
-                self.output_texts = {'texts': {'text_detail_0': paper.get_paper_abstract(),
-                                               'text_detail_1': paper.get_paper_introduction(),
-                                               'text_detail_2': paper.get_paper_conclusion()},
-                                     'name': self.tmpName[self.tmpName.rfind('/') + 1:-4],
-                                     'path': self.tmpName,
-                                     'entity_list': {'text_detail_0': [],
-                                                     'text_detail_1': [],
-                                                     'text_detail_2': []},
-                                     'hint': {'text_detail_0': text2entity.abstract2entity(paper.get_paper_abstract()),
-                                              'text_detail_1': text2entity.abstract2entity(paper.get_paper_introduction()),
-                                              'text_detail_2': text2entity.abstract2entity(paper.get_paper_conclusion())}
-                                     }
-        except Exception as e:
-            pass
-        print('Done')
-
-    def getResult(self):
-        if self.output_texts is not None:
-            return self.output_texts
-
-
 @router.get('/unzip', response_model=UnzipResponse)
 async def unzip(
         filePath: str = Query(..., description='zip file path', example='upload/xxx'),
@@ -297,46 +231,17 @@ async def unzip(
         sectionList: str = Query(..., description='section to be parsed', example="['abstract']"),
 ):
     start = time.time()
-    project_dir = 'upload/' + addProjectName + '/'
-    if os.path.exists(project_dir):
-        shutil.rmtree(project_dir)
-    os.makedirs(project_dir)
-    add_id = str(uuid.uuid4())
-    add_id = ''.join(add_id.split('-'))
-    cmd = 'unzip -o upload/' + filePath + ' -d upload/' + addProjectName + '/' + add_id
-    os.system(cmd)
-    base = os.path.join('upload', addProjectName, add_id)
-    output_texts_ls = []
-    thread_pool = []
-    for i in findAllFile(base):
-        if '__MACOSX' not in i:
-            tmpName = i.replace('\\', '/')
-            thread_pool.append(ParseThread(tmpName, addProjectName, sectionList.split(',')))
-    for th in thread_pool:
-        th.start()
-    for th in thread_pool:
-        th.join()
-        output_texts_ls.append(th.getResult())
+    th_loop = pdf_analysis.unzip_parse(filePath, addProjectName, sectionList)
+    new_loop = asyncio.new_event_loop()
+    t = threading.Thread(target=start_loop, args=(new_loop,))
+    t.start()
+    asyncio.run_coroutine_threadsafe(th_loop, new_loop)
+    pdf_analysis.p_id = str(uuid.uuid4())
+    pdf_analysis.p_id = ''.join(pdf_analysis.p_id.split('-'))
+    await async_db.insert_project(pdf_analysis.p_id, 'upload/' + addProjectName, addProjectName, 0)
 
-    p_id = str(uuid.uuid4())
-    p_id = ''.join(p_id.split('-'))
-    if len(output_texts_ls) == 0:
-        print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Unzip Error No Papers in zip')
-        return {"message": 'No Papers in zip', 'time': time.time() - start}
-    try:
-        file_num = 0
-        for item in output_texts_ls:
-            try:
-                await async_db.insert_file(item['name'], item['path'], item['texts'], p_id, item['entity_list'], item['hint'])
-                file_num += 1
-            except Exception as e:
-                pass
-        await async_db.insert_project(p_id, 'upload/' + addProjectName, addProjectName, file_num)
-        print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Unzip Success')
-        return {"message": "success", 'time': time.time() - start}
-    except Exception as e:
-        print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Unzip Error')
-        return {"message": str(e), 'time': time.time() - start}
+    print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Unzip Success')
+    return {"message": "success", 'time': time.time() - start}
 
 
 @router.get("/get_file/{file_path}")
@@ -361,10 +266,10 @@ async def unzip_more(
     base = os.path.join('upload', projectName, add_id)
     output_texts_ls = []
     thread_pool = []
-    for i in findAllFile(base):
+    for i in pdf_analysis.findAllFile(base):
         if '__MACOSX' not in i:
             tmpName = i.replace('\\', '/')
-            thread_pool.append(ParseThread(tmpName, projectName, sectionList.split(',')))
+            thread_pool.append(pdf_analysis.ParseThread(tmpName, projectName, sectionList.split(',')))
     for th in thread_pool:
         th.start()
     for th in thread_pool:
@@ -378,7 +283,8 @@ async def unzip_more(
         file_num = 0
         for item in output_texts_ls:
             try:
-                await async_db.insert_file(item['name'], item['path'], item['texts'], p_id, item['entity_list'], item['hint'])
+                await async_db.insert_file(item['name'], item['path'], item['texts'], p_id, item['entity_list'],
+                                           item['hint'])
                 file_num += 1
             except Exception as e:
                 print(e)
@@ -533,9 +439,11 @@ async def add_figure_class(
     print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Add Entity_class Success')
     return {'time': time.time() - start}
 
+
 #############################################
 # dqa
 #############################################
+
 
 @router.get('/fetch_dqa_paper', response_model=GetResponse)
 async def fetch_dqa_paper(
@@ -564,7 +472,6 @@ async def update_dqa_mark(
     info = await update_dde_mark(dpaqn_id, mark)
     print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Update DDE mark Success')
     return {'time': time.time() - start}
-
 
 
 #############################################

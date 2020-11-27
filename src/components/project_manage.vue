@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-row justify="space-around" style="background-color: #FFFFFF; box-shadow: 0 0 5px #dddddd; padding: 10px;margin: 5px;">
-      <el-button type="primary" icon="el-icon-folder-add" @click="addProjectVisible = true">Add Project</el-button>
+      <el-button type="primary" icon="el-icon-folder-add" @click="addProjectVisible = true" :disabled="!parse_done">Add Project</el-button>
     </el-row>
 
     <el-dialog title="Add Project" :visible.sync="addProjectVisible" width="30%">
@@ -71,7 +71,7 @@
       >
         <i class="el-icon-upload"></i>
         <div class="el-upload__text">Drag ZIP here, or <em>Click</em></div>
-        <div class="el-upload__tip" slot="tip">ZIP Only & No Spaces In ZIP Name</div>
+        <div class="el-upload__tip" slot="tip">ZIP < 100MB & No Spaces In ZIP Name</div>
       </el-upload>
 
       <div slot="footer" class="dialog-footer">
@@ -83,7 +83,7 @@
     <div class="table-div" style="box-shadow: 0 0 5px #dddddd;margin: 5px;">
       <el-table
         :data="tableData.filter(data => !tableSearch || data.name.toLowerCase().includes(tableSearch.toLowerCase()))"
-        stripe
+        :row-class-name="tableRowClassName"
         border
         highlight-current-row
         v-loading="loading"
@@ -105,10 +105,11 @@
               placeholder="Search By Name"/>
           </template>
           <template slot-scope="scope">
-            <el-button size="mini" type="success" icon="el-icon-edit-outline" @click="tagFile(scope.$index, scope.row)">Mark</el-button>
-            <el-button size="mini" type="warning" icon="el-icon-collection-tag" @click="editClass(scope.$index, scope.row)">Class</el-button>
-            <el-button size="mini" type="primary" icon="el-icon-plus" @click="addFile(scope.$index, scope.row)">Add</el-button>
-            <el-button size="mini" type="danger" icon="el-icon-delete" @click="deleteProject(scope.$index, scope.row)">Delete</el-button>
+            <el-button size="mini" type="success" icon="el-icon-edit-outline" @click="tagFile(scope.$index, scope.row)" v-show="scope.row['parse_done'] === '1'">Mark</el-button>
+            <el-button size="mini" type="warning" icon="el-icon-collection-tag" @click="editClass(scope.$index, scope.row)" v-show="scope.row['parse_done'] === '1'">Class</el-button>
+            <el-button size="mini" type="primary" icon="el-icon-plus" @click="addFile(scope.$index, scope.row)" v-show="scope.row['parse_done'] === '1'" :disabled="!parse_done">Add</el-button>
+            <el-button size="mini" type="danger" icon="el-icon-delete" @click="deleteProject(scope.$index, scope.row)" v-show="scope.row['parse_done'] === '1'">Delete</el-button>
+            <el-button size="medium" type="danger" icon="el-icon-loading" @click="refresh_page" plain v-show="scope.row['parse_done'] === '0'">Parsing Now, CLICK to refresh.</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -137,6 +138,8 @@
 
         sectionList: ['abstract', 'introduction', 'conclusion'],
         sectionName: ['abstract', 'introduction', 'conclusion', 'others'],
+
+        parse_done: true
       }
     },
 
@@ -145,6 +148,10 @@
     },
 
     methods: {
+      refresh_page(){
+        location. reload();
+      },
+
       fetch_project(){
         this.$axios.get('/api/fetch_project').then((response)=> {
           this.tableData = response.data['data'];
@@ -154,6 +161,9 @@
           this.projectNameList = [];
           for(let i = 0; i < this.tableData.length; i++){
             this.projectNameList.push(this.tableData[i]['name']);
+            if(this.tableData[i]['parse_done'] === '0'){
+              this.parse_done = false;
+            }
           }
         }).catch((err)=> {
           this.$notify.error({title: 'Error', message: err});
@@ -199,8 +209,7 @@
           if (response.data['message'] === 'success') {
             this.$notify({
               title: 'Success',
-              duration: 0,
-              message: 'Cost: ' + response.data['time'] + 's',
+              message: 'Upload Successfully, Start Parsing',
               type: 'success'
             });
             this.loading = false;
@@ -309,6 +318,25 @@
         });
       },
 
+      tableRowClassName({row, rowIndex}) {
+        if (row['parse_done'] === "0") {
+          return 'warning-row';
+        } else if (row['parse_done'] === "1") {
+          return 'success-row';
+        }
+        return 'warning-row';
+      },
+
     },
   }
 </script>
+<style>
+.el-table .warning-row {
+  background: #fde6f4;
+}
+
+.el-table .success-row {
+
+}
+
+</style>
