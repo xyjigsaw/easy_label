@@ -5,8 +5,9 @@
         <h2>Notification</h2>
       </div>
       <div class="text item">
-        <strong>Last  Updated: 20201118</strong><br>
+        <strong>Last  Updated: 20201218</strong><br>
         <h2>New Features</h2>
+        <li>Search for researcher part and bug fixed</li>
         <li>DDEKG-oriented marking</li>
         <li>DDE_Figure-oriented marking</li>
         <li>Paper entity and relation marking</li>
@@ -15,7 +16,6 @@
         <li>Auto Hint</li>
         <li>Auto Mark</li>
         <li>Shortcuts for switching labels</li>
-
       </div>
     </el-card>
 

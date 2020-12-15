@@ -27,7 +27,7 @@ from toolkit.sequence_tagging import text2entity
 
 from pydantic import BaseModel
 from external_db import db_search, db_rand, db_get_entity_class, db_update_entity_list, db_insert_entity_class, \
-    db_update_relation_list, dqa_search_paper, dqa_all_paper_id, update_dde_mark
+    db_update_relation_list, dqa_search_paper, dqa_all_paper_id, update_dde_mark, db_search_by_id
 
 import pdf_analysis
 
@@ -330,6 +330,23 @@ async def research_post(request: ResearchItem):
         api_data = await db_search(name, affiliation, limit, version)
     entity_class = await db_get_entity_class()
     print('Search: ', 'success', name, affiliation, limit,
+          time.strftime('%Y/%m/%d/%H/%M/%S', time.localtime(time.time())))
+    return {"message": "success", 'time': time.time() - start, 'data': api_data, 'entity_class': entity_class}
+
+
+class ResearchItem2(BaseModel):
+    fund_id: str = ''
+    version: str = ''
+
+
+@router.post('/research_post_by_id')
+async def research_post_by_id(request: ResearchItem2):
+    start = time.time()
+    fund_id = request.fund_id
+    version = request.version
+    api_data = await db_search_by_id(fund_id, version)
+    entity_class = await db_get_entity_class()
+    print('Search: ', 'success', fund_id,
           time.strftime('%Y/%m/%d/%H/%M/%S', time.localtime(time.time())))
     return {"message": "success", 'time': time.time() - start, 'data': api_data, 'entity_class': entity_class}
 

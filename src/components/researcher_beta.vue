@@ -14,8 +14,11 @@
         <el-col :span="2" v-if="is_edit !== true"><div class="grid-content bg-purple">
           <el-input v-model="input_limit" placeholder="limit(optional)"></el-input>
         </div></el-col>
-        <el-col :span="2" v-if="is_edit !== true"><div class="grid-content bg-purple">
-          <el-button type="primary" plain @click="search(0)">Search</el-button>
+        <el-col :span="2" v-if="showTable && is_edit === true"><div class="grid-content bg-purple">
+          <el-input v-model="input_id" placeholder="fund id"></el-input>
+        </div></el-col>
+        <el-col :span="2" v-if="showTable && is_edit === true"><div class="grid-content bg-purple">
+          <el-button type="primary" plain @click="search_by_id_portal">Search</el-button>
         </div></el-col>
         <el-col :span="2" v-if="showTable && is_edit === true"><div class="grid-content bg-purple">
           <el-button type="success" plain @click="rand_search">Random</el-button>
@@ -141,10 +144,6 @@
             <el-button type="success" icon="el-icon-check" circle @click="save"></el-button>
             <p style="font-size: 8px; color: #67C23A; text-align: center">Save</p>
           </el-col>
-          <el-col :span="2">
-            <el-button type="info" icon="el-icon-right" circle @click="exit"></el-button>
-            <p style="font-size: 8px; color: #909399; text-align: center">Exit</p>
-          </el-col>
         </el-row>
       </div>
 
@@ -206,6 +205,7 @@ export default {
       input_name: '',
       input_affiliation: '',
       input_limit: '',
+      input_id: '',
 
       showTable: false,
       tableData: null,
@@ -284,6 +284,24 @@ export default {
     this.keydown = '';
   },
   methods: {
+    search_by_id_portal(){
+      this.loading_detail = true;
+      this.search_by_id()
+      this.msg = 'Researcher Edit Mode';
+      this.is_edit = true;
+      this.switch_color = false;
+      this.checkList = [];
+      this.check_max = 1;
+      this.currentPage_save = this.currentPage;
+      this.cur_rel_ls = {'event': '', 'time': '', 'affiliation': ''};
+      this.cur_type_ls = [];
+      if(this.first_mount){
+
+      }else{
+        this.labelIns.checkList = this.checkList;
+        this.labelIns.check_max = this.check_max;
+      }
+    },
     rand_search(){
       this.loading_detail = true;
       this.search(1);
@@ -328,6 +346,69 @@ export default {
 
       let tagged_data = [];
       this.$axios.post('/api/research_post', url_data).then(response => {
+        if (response.data) {
+          if(this.first_mount){
+            //for entity class
+            this.entityClass = [];
+            this.entityClass = [];
+            this.checkList = [];
+            this.template_string = '';
+            for(let i = 0; i < response.data['entity_class'].length; i++){
+              this.entityClass.push(response.data['entity_class'][i]['label']);
+              this.entityColor.push(response.data['entity_class'][i]['color']);
+              this.addClassLabelStr(response.data['entity_class'][i]['label'], response.data['entity_class'][i]['color'])
+            }
+            this.mount_labels(this.template_string, '#class_ls');
+            this.first_mount = false;
+          }else{
+            this.labelIns.checkList = this.checkList;
+            this.labelIns.check_max = this.check_max;
+          }
+          //for content
+          this.total = response.data['data'].length;
+          for(let i = 0; i < response.data['data'].length; i++){
+            let origin_content = response.data['data'][i]['Content'];
+            let cur_content = response.data['data'][i]['Content'];
+            let entity_str = response.data['data'][i]['Entity_list'];
+            let entity_str_ls = eval(entity_str);
+            //let entity_str_ls = entity_str.split('|');
+            cur_content = this.genContent(entity_str_ls, cur_content);
+            tagged_data.push({'Content': cur_content, 'id': response.data['data'][i]['id'],
+              'Affiliation': response.data['data'][i]['Affiliation'], 'AuthorName': response.data['data'][i]['AuthorName'],
+              'origin_content': origin_content, 'Entity_list': response.data['data'][i]['Entity_list'], 'Mark_relation': eval(response.data['data'][i]['Mark_relation'])});
+          }
+          this.tableData = tagged_data;
+          this.showTable = true;
+
+          this.tableData_save = this.tableData;
+          this.currentPage_save = this.currentPage;
+          this.total_save = this.total;
+          this.relTable = this.tableData[0]['Mark_relation'];
+          console.log(this.tableData[0]);
+          this.handleCurrentChange(1); //page:0
+          //console.log(this.tableData);
+          this.loading_detail = false;
+        }
+      }).catch(err => {
+        this.$message.error('Sorry, not found in database. The Result is empty.');
+        this.showTable = false;
+        this.input_name = '';
+        this.input_affiliation = '';
+        this.input_limit = '';
+      });
+    },
+
+    search_by_id() {
+      if(this.input_id===''){
+        return ;
+      }
+
+      let url_data={
+        fund_id: this.input_id.trim(),
+        version: this.data_version ? "0" : "1",
+      };
+      let tagged_data = [];
+      this.$axios.post('/api/research_post_by_id', url_data).then(response => {
         if (response.data) {
           if(this.first_mount){
             //for entity class
@@ -546,15 +627,16 @@ export default {
     exit(){
       //location.reload();
       this.msg = 'Researcher NER';
-      this.tableData = this.tableData_save;
-      this.currentPage = this.currentPage_save;
+      //this.tableData = this.tableData_save;
+      //this.currentPage = this.currentPage_save;
       this.total = this.total_save;
-      //this.is_edit = false;
+      // this.is_edit = false;
       this.checkList = this.entityClass;
       this.labelIns.check_max = 100;
       this.labelIns.checkList = this.entityClass;
       this.cur_rel_ls = {'event': '', 'time': '', 'affiliation': ''};
       this.cur_type_ls = [];
+
       this.handleCurrentChange(this.currentPage);
 
     },
@@ -822,11 +904,16 @@ export default {
 
     change_version(){
       this.$message({
-        message: 'Change will happen next time.',
+        message: 'Data Partition Changed!',
         type: 'warning'
       });
     },
 
+  },
+  watch: {
+    data_version(val, oldVal) {
+      this.rand_search()
+    }
   }
 }
 

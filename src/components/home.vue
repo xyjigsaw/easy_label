@@ -1,10 +1,10 @@
 <template>
-  <el-container class="container">
+  <el-container class="container_all">
     <!-- 头部 -->
     <el-header>
       <h1 style="color: #409EFF">Easy Mark</h1>
     </el-header>
-    <el-container>
+    <el-container class="container_main">
       <!-- aside menu-->
       <el-menu class="el-menu-vertical-demo" @open="handleOpen" @close="handleClose" :collapse="isCollapse">
         <el-menu-item index="5" @click="navDashboard">
@@ -52,6 +52,7 @@
         <router-view></router-view>
       </el-main>
     </el-container>
+    <el-footer height="10px"><span style="color: #b3b3b3; font-size: 12px;"> </span></el-footer>
   </el-container>
 </template>
 
@@ -96,10 +97,10 @@
 </script>
 <style scoped>
   .el-container {
-    margin-bottom: 40px;
+    margin-bottom: 10px;
   }
-  .container {
-    height: 1000px;
+  .container_main {
+    height: calc(90vh);
   }
   .el-header {
     text-align: left;
