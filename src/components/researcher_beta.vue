@@ -41,6 +41,12 @@
           <el-button type="success" icon="el-icon-check" circle @click="save"></el-button>
           <p style="font-size: 8px; color: #67C23A; text-align: center">Save</p>
         </div></el-col>
+
+        <el-col :span="2" v-if="showTable && is_edit === true"><div class="grid-content bg-purple">
+          <el-button type="info" icon="el-icon-phone-outline" circle @click="sendemail"></el-button>
+          <p style="font-size: 8px; color: #909399; text-align: center">Feedback</p>
+        </div></el-col>
+
         <el-col :span="2" v-if="showTable && is_edit !== true"><div class="grid-content bg-purple">
           <el-button type="info" icon="el-icon-right" circle @click="exit"></el-button>
           <p style="font-size: 8px; color: #909399; text-align: center">Exit</p>
@@ -248,6 +254,8 @@ export default {
       loading_detail: false,
 
       autoMarkSelection: true,
+
+      operation_history: '',
     }
   },
 
@@ -303,6 +311,7 @@ export default {
       }
     },
     rand_search(){
+      this.operation_history = '';
       this.loading_detail = true;
       this.search(1);
       this.msg = 'Researcher Edit Mode';
@@ -379,6 +388,7 @@ export default {
           }
           this.tableData = tagged_data;
           this.showTable = true;
+          this.operation_history = '';
 
           this.tableData_save = this.tableData;
           this.currentPage_save = this.currentPage;
@@ -442,6 +452,7 @@ export default {
           }
           this.tableData = tagged_data;
           this.showTable = true;
+          this.operation_history = '';
 
           this.tableData_save = this.tableData;
           this.currentPage_save = this.currentPage;
@@ -662,6 +673,7 @@ export default {
             base += r_cnt;
             console.log('base: ' + base);
             console.log('r: ' + r_cnt);
+            this.operation_history += '【selectText->this.autoMarkSelection base' + base + ' r: ' + r_cnt + '】'
             if(start_num < end_num && end_num - start_num === selected.length && this.checkList.length === 1){
               console.log('Selected text: ' + selected);
               let cur_content = this.current_data['origin_content'];
@@ -670,6 +682,7 @@ export default {
               if(this.autoMarkSelection){
                 if(selected.indexOf(' ') > -1) return;
                 console.log('start', start_num, ' end: ', end_num)
+                this.operation_history += '【selectText->this.autoMarkSelection start' + start_num + ' end: ' + end_num + '】'
                 let marginChar = [',', '.', ':', ';', '?', '!', ' ', '(', ')', '>', '<', '"', '*', '%', '-', '_', '\n', '。']
                 let selectedPosList = [];
                 let tmpPos = 0;
@@ -696,6 +709,8 @@ export default {
                     }else{
                       console.log({'start': selectedPosList[i],
                         'end': selectedPosList[i] + selected.length, 'word': selected, 'type': this.checkList[0]});
+                      this.operation_history += '【selectText->this.autoMarkSelection this.check_entity else: start: ' + selectedPosList[i] + ' end: ' + selectedPosList[i] + selected.length +
+                        'word: ' + selected + ' type: ' + this.checkList[0] + '】';
                     }
                   }
                 }
@@ -743,6 +758,7 @@ export default {
             let startNum = parseInt(spanObj.getAttribute("data-startNum"));
             let endNum = parseInt(spanObj.getAttribute("data-endNum"));
             console.log('Click Span: ' + spanObj.innerHTML + ' ' + startNum + ' ' + endNum);
+            this.operation_history += '【spanEvent->this.checkList.length === 1 and spanClass === this.checkList[0] Click Span: ' + spanObj.innerHTML + ' ' + startNum + ' ' + endNum +'】';
             this.removeEntity(startNum, endNum, spanObj.innerHTML);
           }
         }else{
@@ -752,6 +768,7 @@ export default {
           let endNum = parseInt(spanObj.getAttribute("data-endNum"));
           if(!isNaN(startNum)){
             console.log('Click Span: ' + spanObj.innerHTML + ' ' + startNum + ' ' + endNum + ' ' + spanClass);
+            this.operation_history += '【spanEvent->!isNaN(startNum Click Span: ' + spanObj.innerHTML + ' ' + startNum + ' ' + endNum + ' ' + spanClass + '】';
             if(spanClass === 'Time'){
               this.cur_rel_ls['time'] = {'word': spanObj.innerHTML, 'start': startNum, 'end': endNum, 'type': spanClass};
             }else if(spanClass === 'Institut'){
@@ -787,7 +804,6 @@ export default {
         //if(entity_str_ls[i]['start'] === startNum && entity_str_ls[i]['end'] === endNum){
         //  entity_str_ls.splice(i,1);
         //}
-
         if(this.autoMarkSelection){
           if(entity_str_ls[i]['end'] - entity_str_ls[i]['start'] === endNum - startNum
             && entity_str_ls[i]['word'] === spanWord){
@@ -907,6 +923,17 @@ export default {
         message: 'Data Partition Changed!',
         type: 'warning'
       });
+    },
+
+    sendemail(){
+      let subject = "EasyMark Acemap Researcher Page fund_id:" + this.tableData[this.currentPage - 1]['id'];
+      let to = "yixu98@sjtu.edu.cn";
+      //let cc = "bc.@126.com";
+      let body = '【' + this.tableData[this.currentPage - 1]['id'] + '】【' + this.tableData[this.currentPage - 1]['AuthorName'] + '】【Version: ' + this.data_version + '】'
+        + this.operation_history.slice(this.operation_history.length - 100, this.operation_history.length);
+      let url = '';
+      url="mailto:" + to + "?subject=" + subject + "&body=" + body;
+      document.location.href=url;
     },
 
   },
