@@ -71,6 +71,8 @@
           <p v-show="!edit_fid">Click <i class="el-icon-edit"></i> In The Table On The Right To Start</p>
           <el-button v-if="edit_fid" type="text">Version: {{ tableData[edit_table_pos]['version'] }} </el-button>
           <el-button v-if="edit_fid" type="text">{{ tableData[edit_table_pos]['file_name'] }}</el-button>
+          <el-button v-if="edit_fid" size="small" type="danger" icon="el-icon-close" plain @click="update_check(edit_fid, '0')"></el-button>
+          <el-button v-if="edit_fid" size="small" type="success" icon="el-icon-check" plain @click="update_check(edit_fid, '1')"></el-button>
           <div id="text_detail_group" v-if="edit_fid">
             <el-collapse v-model="activeNames">
               <el-collapse-item v-for="text_id in text_detail_ls" :name="text_id" :key="text_id"
@@ -159,6 +161,7 @@
           :data="tableData.slice((currentPage - 1) * pageSize, currentPage*pageSize)"
           border
           :highlight-current-row="true"
+          :row-class-name="tableRowClassName"
           :row-style="{height:'8px'}" :cell-style="{padding:'5px 0'}"
           style="width: 100%; font-size: 10px">
           <el-table-column fixed prop="file_name" label="Name"></el-table-column>
@@ -955,6 +958,27 @@
         }
       },
 
+      tableRowClassName({row, rowIndex}) {
+        console.log(row)
+        if (row['checked'] === "0") {
+          return 'warning-row';
+        } else if (row['checked'] === "1") {
+          return 'success-row';
+        }
+        return 'null-row';
+      },
+
+      update_check(f_id, flag){
+        let url_data = new FormData();
+        url_data.append('f_id', f_id);
+        url_data.append('checked', flag);
+        this.$axios.put('/api/update_file_check', url_data).then(response => {
+          this.tableData[this.edit_table_pos]['checked'] = flag;
+        }).catch(err => {
+          this.$notify.error({title: 'Error', message: err});
+        });
+      },
+
     },
 
     created() {
@@ -1019,6 +1043,15 @@
 
 </script>
 <style>
+.el-table .warning-row {
+  background: #fde6f4;
+}
 
+.el-table .success-row {
+  background: #f0f9eb;
+}
 
+.el-table .null-row {
+  background: #ffffff;
+}
 </style>

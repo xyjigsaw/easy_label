@@ -209,6 +209,16 @@ async def heart_beat(
     return {'time': time.time() - start, 'data': 'heart_beat'}
 
 
+@router.put('/update_file_check', response_model=SuccessResponse)
+async def update_file_check(
+        f_id: str = Form(..., description='file id', example='1234'),
+        checked: str = Form(..., description='mark value', example='1')
+):
+    start = time.time()
+    info = await async_db.update_file_check(f_id, checked)
+    print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Update File Check Success')
+    return {'time': time.time() - start}
+
 #############################################
 # Upload Download Unzip Parse
 #############################################

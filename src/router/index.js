@@ -32,10 +32,10 @@ export default new Router({
         {path: 'dashboard', name: 'dashboard', component: dashboard},
         {path: 'researcher_beta', name: 'researcher_beta', component: researcher_beta},
         {path: 'external_page', name: 'external_page', component: external_page},
-        {path: 'figures', name: 'figures', component: figures, meta: {img_port: 'http://10.10.2.85:8000/get_file/'}},
+        {path: 'figures', name: 'figures', component: figures, meta: {img_port: 'http://10.10.2.77:8000/get_file/'}},
         {path: 'qa_ner', name: 'qa_ner', component: qa_ner},
         {path: 'work_table', name: 'work_table', component: work_table, meta:
-            {ws_port: 'ws://10.10.2.85:8000/ws', pdf_port: 'http://10.10.2.85:8000/get_file/'}},
+            {ws_port: 'ws://10.10.2.77:8000/ws', pdf_port: 'http://10.10.2.77:8000/get_file/'}},
       ]
     },
   ]

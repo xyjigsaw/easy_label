@@ -129,6 +129,12 @@ async def change_status(f_id, status):
     return 'success'
 
 
+async def update_file_check(f_id, checked):
+    sql = "UPDATE file SET checked = %s WHERE f_id = %s"
+    ret = await mysql_select(sql, checked, f_id, db='label_sys')
+    return 'success'
+
+
 async def get_figure_class():
     sql = "select * from figure_class"
     ret = await mysql_select(sql, db='label_sys', cursor_type=DictCursor)
