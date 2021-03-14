@@ -51,11 +51,14 @@ async def fetch_project():
     start = time.time()
     if pdf_analysis.parse_done:
         try:
+            project_log = ''
             file_num = 0
-            print(pdf_analysis.output_texts_ls)
+            # print(pdf_analysis.output_texts_ls)
             for item in pdf_analysis.output_texts_ls:
+                if 'log' in item:
+                    project_log += '@@@' + item['name'] + '****' + item['log'] + '\n'
+                    continue
                 try:
-
                     await async_db.insert_file(item['name'], item['path'], item['texts'], pdf_analysis.p_id,
                                                item['entity_list'], item['hint'])
                     file_num += 1
@@ -63,6 +66,7 @@ async def fetch_project():
                     print(e)
                     pass
             await async_db.parsing_status(pdf_analysis.p_id, '1', file_num)
+            await async_db.update_project_log(pdf_analysis.p_id, project_log)
             print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Unzip Success')
         except Exception as e:
             print(e)
@@ -200,15 +204,6 @@ async def fetch_hint(
     return {'time': time.time() - start, 'data': api_data}
 
 
-@router.post('/heart_beat')
-async def heart_beat(
-        string: str = Form(..., description='random string', example='a'),
-):
-    start = time.time()
-    print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'HEART BEAT ' + string)
-    return {'time': time.time() - start, 'data': 'heart_beat'}
-
-
 @router.put('/update_file_check', response_model=SuccessResponse)
 async def update_file_check(
         f_id: str = Form(..., description='file id', example='1234'),
@@ -218,6 +213,16 @@ async def update_file_check(
     info = await async_db.update_file_check(f_id, checked)
     print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Update File Check Success')
     return {'time': time.time() - start}
+
+
+@router.post('/heart_beat')
+async def heart_beat(
+        string: str = Form(..., description='random string', example='a'),
+):
+    start = time.time()
+    print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'HEART BEAT ' + string)
+    return {'time': time.time() - start, 'data': 'heart_beat'}
+
 
 #############################################
 # Upload Download Unzip Parse
@@ -291,7 +296,10 @@ async def unzip_more(
         return {"message": 'No Papers in zip', 'time': time.time() - start}
     try:
         file_num = 0
+        project_log = ''
         for item in output_texts_ls:
+            if 'log' in item:
+                project_log += '@@@' + item['name'] + '****' + item['log'] + '\n'
             try:
                 await async_db.insert_file(item['name'], item['path'], item['texts'], p_id, item['entity_list'],
                                            item['hint'])
@@ -300,6 +308,7 @@ async def unzip_more(
                 print(e)
 
         await async_db.update_project(p_id, file_num)
+        await async_db.update_project_log(p_id, project_log)
         print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Unzip Add Success')
         return {"message": "success", 'time': time.time() - start}
     except Exception as e:

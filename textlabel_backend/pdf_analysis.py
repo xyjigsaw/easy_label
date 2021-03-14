@@ -106,7 +106,8 @@ class ParseThread(threading.Thread):
                                               'text_detail_2': text2entity.abstract2entity(paper.get_paper_conclusion())}
                                      }
         except Exception as e:
-            pass
+            self.output_texts = {'name': self.tmpName, 'log': str(e)}
+            print('Parse Error: ' + str(e))
         print('Done')
 
     def getResult(self):

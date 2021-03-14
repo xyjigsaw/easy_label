@@ -70,6 +70,12 @@ async def update_project(p_id, file_num):
     return 'success'
 
 
+async def update_project_log(p_id, log):
+    sql = "UPDATE project SET log = CONCAT(IFNULL(log,''), %s) WHERE p_id = %s"
+    ret = await mysql_select(sql, log, p_id, db='label_sys')
+    return 'success'
+
+
 async def insert_file(name, path, text, p_id, entity_list, hint):
     sql = "INSERT INTO file(file_name, file_path, version, entity_list, text, p_id, is_edit, hint, Mark_relation) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)"
     ret = await mysql_select(sql, name, path, 0, json.dumps(entity_list), json.dumps(text), p_id, 0, json.dumps(hint), json.dumps(eval('[]')), db='label_sys')

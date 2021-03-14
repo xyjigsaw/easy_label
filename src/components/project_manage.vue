@@ -80,6 +80,13 @@
       </div>
     </el-dialog>
 
+    <el-dialog title="Project Log" :visible.sync="logVisible" width="80%">
+      <el-table :data="project_log">
+        <el-table-column width="500" property="name" label="name" sortable></el-table-column>
+        <el-table-column width="500" property="log" label="log"></el-table-column>
+      </el-table>
+    </el-dialog>
+
     <div class="table-div" style="box-shadow: 0 0 5px #dddddd;margin: 5px;">
       <el-table
         :data="tableData.filter(data => !tableSearch || data.name.toLowerCase().includes(tableSearch.toLowerCase()))"
@@ -96,7 +103,7 @@
         <el-table-column label="Files" sortable prop="total" width="90"></el-table-column>
         <el-table-column label="Created Time" prop="time"></el-table-column>
         <el-table-column
-          width="375"
+          width="480"
           align="right">
           <template slot="header" slot-scope="scope">
             <el-input
@@ -109,6 +116,7 @@
             <el-button size="mini" type="warning" icon="el-icon-collection-tag" @click="editClass(scope.$index, scope.row)" v-show="scope.row['parse_done'] === '1'">Class</el-button>
             <el-button size="mini" type="primary" icon="el-icon-plus" @click="addFile(scope.$index, scope.row)" v-show="scope.row['parse_done'] === '1'" :disabled="!parse_done">Add</el-button>
             <el-button size="mini" type="danger" icon="el-icon-delete" @click="deleteProject(scope.$index, scope.row)" v-show="scope.row['parse_done'] === '1'">Delete</el-button>
+            <el-button size="mini" type="info" icon="el-icon-info" v-popover:project_log_pop @click="showLog(scope.$index, scope.row)" v-show="scope.row['parse_done'] === '1'">Log</el-button>
             <el-button size="medium" type="danger" icon="el-icon-loading" @click="refresh_page" plain v-show="scope.row['parse_done'] === '0'">Parsing Now, CLICK to refresh.</el-button>
           </template>
         </el-table-column>
@@ -139,7 +147,10 @@
         sectionList: ['abstract', 'introduction', 'conclusion'],
         sectionName: ['abstract', 'introduction', 'conclusion', 'others'],
 
-        parse_done: true
+        parse_done: true,
+
+        project_log: [],
+        logVisible: false
       }
     },
 
@@ -316,6 +327,21 @@
           });
         }).catch(() => {
         });
+      },
+
+      showLog(index, row){
+        this.project_log = [];
+        if(row['log'] == null){
+          this.project_log.push({'name': '', 'log': ''});
+        }else{
+          let log_ls = row['log'].split("@@@");
+          for (let i = 0; i < log_ls.length; i++){
+            if(log_ls[i] === "")continue;
+            let item = log_ls[i].split("****")
+            this.project_log.push({'name': item[0].substring(item[0].lastIndexOf('/') + 1, item[0].length), 'log': item[1]});
+          }
+        }
+        this.logVisible = true;
       },
 
       tableRowClassName({row, rowIndex}) {

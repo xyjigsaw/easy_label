@@ -922,6 +922,11 @@
           this.wsTable.unshift({'subject': 'Remote Info Sync', 'info': this.tableData[msg['pos']]['file_name'] + ' Relation Updated'});
         }
 
+        if(info_data['subject'] === 'checked' && msg['p_id'] === this.p_id && msg['pos'] <= this.tableData.length){
+          this.tableData[msg['pos']]['checked'] = msg['checked'];
+          this.wsTable.unshift({'subject': 'Remote Info Sync', 'info': this.tableData[msg['pos']]['file_name'] + ' Checked Status Updated'});
+        }
+
       },
 
       sendMessage(info) {
@@ -974,6 +979,8 @@
         url_data.append('checked', flag);
         this.$axios.put('/api/update_file_check', url_data).then(response => {
           this.tableData[this.edit_table_pos]['checked'] = flag;
+          let wsInfo = {'message': {'p_id': this.p_id, 'f_id': this.edit_fid, 'pos': this.edit_table_pos, 'checked': flag}, 'subject': 'checked'}
+          this.sendMessage(JSON.stringify(wsInfo));
         }).catch(err => {
           this.$notify.error({title: 'Error', message: err});
         });
