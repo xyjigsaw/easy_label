@@ -90,5 +90,5 @@ npm install axios -S
 npm install element-ui -S
 npm install vue-pdf -S
 npm install jsplumb -S
-# npm install goeasy -S not used
+npm install file-saver -S
 ```
