@@ -73,6 +73,7 @@
           <el-button v-if="edit_fid" type="text">{{ tableData[edit_table_pos]['file_name'] }}</el-button>
           <el-button v-if="edit_fid" size="small" type="danger" icon="el-icon-close" plain @click="update_check(edit_fid, '0')"></el-button>
           <el-button v-if="edit_fid" size="small" type="success" icon="el-icon-check" plain @click="update_check(edit_fid, '1')"></el-button>
+          <el-button v-if="edit_fid" size="small" type="info" icon="el-icon-minus" plain @click="update_check(edit_fid, 'Null')"></el-button>
           <div id="text_detail_group" v-if="edit_fid">
             <el-collapse v-model="activeNames">
               <el-collapse-item v-for="text_id in text_detail_ls" :name="text_id" :key="text_id"

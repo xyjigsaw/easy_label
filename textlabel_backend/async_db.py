@@ -112,6 +112,12 @@ async def fetch_file_limit(p_id, anchor, page_size):
     return ret
 
 
+async def fetch_files(p_id):
+    sql = "SELECT * FROM file where p_id = %s"
+    ret = await mysql_select(sql, p_id, db='label_sys', cursor_type=DictCursor)
+    return ret
+
+
 async def update_entity_list(f_id, entity_list):
     sql = "UPDATE file SET entity_list = %s WHERE f_id = %s"
     sql2 = "UPDATE file SET version = version + 1 WHERE f_id = %s"

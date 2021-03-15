@@ -103,7 +103,7 @@
         <el-table-column label="Files" sortable prop="total" width="90"></el-table-column>
         <el-table-column label="Created Time" prop="time"></el-table-column>
         <el-table-column
-          width="480"
+          width="580"
           align="right">
           <template slot="header" slot-scope="scope">
             <el-input
@@ -116,7 +116,8 @@
             <el-button size="mini" type="warning" icon="el-icon-collection-tag" @click="editClass(scope.$index, scope.row)" v-show="scope.row['parse_done'] === '1'">Class</el-button>
             <el-button size="mini" type="primary" icon="el-icon-plus" @click="addFile(scope.$index, scope.row)" v-show="scope.row['parse_done'] === '1'" :disabled="!parse_done">Add</el-button>
             <el-button size="mini" type="danger" icon="el-icon-delete" @click="deleteProject(scope.$index, scope.row)" v-show="scope.row['parse_done'] === '1'">Delete</el-button>
-            <el-button size="mini" type="info" icon="el-icon-info" v-popover:project_log_pop @click="showLog(scope.$index, scope.row)" v-show="scope.row['parse_done'] === '1'">Log</el-button>
+            <el-button size="mini" type="info" icon="el-icon-info" @click="showLog(scope.$index, scope.row)" v-show="scope.row['parse_done'] === '1'">Log</el-button>
+            <el-button size="mini" icon="el-icon-download" @click="download_project(scope.$index, scope.row)" v-show="scope.row['parse_done'] === '1'">Download</el-button>
             <el-button size="medium" type="danger" icon="el-icon-loading" @click="refresh_page" plain v-show="scope.row['parse_done'] === '0'">Parsing Now, CLICK to refresh.</el-button>
           </template>
         </el-table-column>
@@ -342,6 +343,20 @@
           }
         }
         this.logVisible = true;
+      },
+
+      download_project(index, row){
+        let url_data={
+          p_id: row['p_id'],
+        };
+        this.$axios.get('/api/download_project', {params: url_data}).then(response => {
+          let FileSaver = require('file-saver');
+          let content = JSON.stringify({'data': response['data']['data']});
+          let blob = new Blob([content], {type: "text/plain;charset=utf-8"});
+          FileSaver.saveAs(blob, row['name'] + ".json");
+        }).catch(err => {
+          this.$notify.error({title: 'Error', message: err});
+        });
       },
 
       tableRowClassName({row, rowIndex}) {

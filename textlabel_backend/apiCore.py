@@ -228,6 +228,15 @@ async def heart_beat(
 # Upload Download Unzip Parse
 #############################################
 
+@router.get('/download_project', response_model=GetResponse)
+async def download_project(
+        p_id: str = Query(..., description='project id', example='4beb867cdeba4f259d9202f5bc58a47c')
+):
+    start = time.time()
+    api_data = await async_db.fetch_files(p_id)
+    print(time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(time.time())), 'Fetch Files Success')
+    return {'time': time.time() - start, 'data': api_data}
+
 
 @router.post("/file_upload", response_model=UploadResponse)
 async def file_upload(file: UploadFile = File(..., description='ZIP file to upload. (Use multipart form)')):
