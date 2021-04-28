@@ -457,7 +457,7 @@
             });
           }
         }
-        console.log('DETAIL', info);
+        console.log('DETAIL:', info);
         this.relTable = JSON.parse(info['Mark_relation']);
         this.logTable.unshift({'Event': "Mark", 'f_id': this.edit_fid, 'info': 'Edit file to mark entity',
           'entity_list_len': this.count_entity_num()});
