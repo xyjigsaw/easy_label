@@ -281,7 +281,7 @@
         pdfUrl: '',
         pdf_cur_page: 1,
         pdf_page_count: 0,
-        showPDF: true,
+        showPDF: false,
 
         activeNames: ['text_detail_0'],
         text_detail_ls :[],
@@ -417,7 +417,7 @@
         this.gen_text_frame(JSON.parse(info['entity_list']));
         this.activeNames = ['text_detail_0'];
         this.see_PDF(info);
-        this.showPDF = true;
+        this.showPDF = false;
         this.edit_fid = info['f_id'];
         this.edit_text = JSON.parse(info['text']);
         this.edit_entity_list = JSON.parse(info['entity_list']);
@@ -940,6 +940,9 @@
       },
 
       see_PDF(info) {
+        if(typeof(info['file_path']) === undefined){
+          return;
+        }
         let pdf_path = info['file_path'];
         pdf_path = btoa(encodeURIComponent(pdf_path));
         this.pdfUrl = pdf.createLoadingTask(this.$route.meta.pdf_port + pdf_path);
@@ -965,7 +968,7 @@
       },
 
       tableRowClassName({row, rowIndex}) {
-        console.log(row)
+        //console.log(row)
         if (row['checked'] === "0") {
           return 'warning-row';
         } else if (row['checked'] === "1") {
