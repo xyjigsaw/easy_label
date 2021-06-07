@@ -186,7 +186,7 @@
                            @next-click="handleNextClick"
                            :current-page.sync="currentPage"
                            :page-size="pageSize"
-                           layout="total, prev, next"
+                           layout="total, prev, next, jumper"
                            :total="parseInt(total)">
             </el-pagination>
           </el-row>
@@ -297,7 +297,7 @@
         let url_data={
           p_id: this.p_id,
           anchor: anchor,
-          pageSize: this.pageSize,
+          pageSize: this.pageSize,  //this.total
         };
         this.$axios.get('/api/fetch_file', {params: url_data}).then(response => {
           this.tableData = this.tableData.concat(response.data['data']);
